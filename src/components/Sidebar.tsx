@@ -132,7 +132,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onOpenSubscribe}
-          className="w-full rounded-lg bg-text px-3 py-2 text-[13.5px] font-medium text-bg transition-opacity hover:opacity-90"
+          className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-transparent bg-text px-3 text-[13.5px] font-medium text-bg transition-opacity hover:opacity-90"
         >
           每天早上获取 5 个用例
         </button>
@@ -140,7 +140,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={handleGiveToAgent}
-          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[13.5px] text-muted transition-colors hover:border-faint hover:text-text"
+          className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-line px-3 text-[13.5px] text-muted transition-colors hover:border-faint hover:text-text"
         >
           {copiedAgentPrompt ? (
             <>
