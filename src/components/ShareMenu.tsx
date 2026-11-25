@@ -23,8 +23,7 @@ export function ShareMenu({ id, title, compact = false }: ShareMenuProps) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
-  const localUrl = `${window.location.origin}/use-case/${id}`;
-  const upstreamUrl = `https://agentusecases.ai/use-case/${id}`;
+  const shareUrl = `${window.location.origin}/use-case/${id}`;
 
   async function handleCopy(url: string) {
     try {
@@ -42,7 +41,7 @@ export function ShareMenu({ id, title, compact = false }: ShareMenuProps) {
   function handleShareX() {
     const xUrl = new URL("https://x.com/intent/post");
     xUrl.searchParams.set("text", title);
-    xUrl.searchParams.set("url", upstreamUrl);
+    xUrl.searchParams.set("url", shareUrl);
     window.open(xUrl.toString(), "_blank", "noopener,noreferrer");
     setOpen(false);
   }
@@ -70,19 +69,11 @@ export function ShareMenu({ id, title, compact = false }: ShareMenuProps) {
         >
           <button
             type="button"
-            onClick={() => handleCopy(localUrl)}
+            onClick={() => handleCopy(shareUrl)}
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-text hover:bg-wash"
           >
             {copied ? <Check className="size-3.5 text-signal" /> : <Link2 className="size-3.5 text-muted" />}
-            <span>复制本地链接</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleCopy(upstreamUrl)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-text hover:bg-wash"
-          >
-            <Link2 className="size-3.5 text-muted" />
-            <span>复制原站链接</span>
+            <span>复制链接</span>
           </button>
           <button
             type="button"

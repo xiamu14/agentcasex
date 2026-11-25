@@ -357,28 +357,12 @@ export function Sidebar({
           >
             关于本站
           </button>
-          <a
-            href="https://agentusecases.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-text hover:underline"
-          >
-            原站 ↗
-          </a>
-          <a
-            href="https://agentusecases.ai/feed.xml"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-text hover:underline"
-          >
-            RSS
-          </a>
           <button
             type="button"
             onClick={onRefreshData}
             disabled={refreshing}
             className="inline-flex items-center gap-1 hover:text-text"
-            title="从 agentusecases.ai 强制拉取最新数据"
+            title="强制同步最新案例数据"
           >
             <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
             <span>{refreshing ? "同步中" : "同步数据"}</span>

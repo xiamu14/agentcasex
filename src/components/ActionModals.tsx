@@ -359,44 +359,17 @@ export function AboutModal({ open, totalCount, onClose }: AboutModalProps) {
           关于本站 · ABOUT
         </p>
         <h3 className="mt-1.5 font-display text-xl font-bold text-text">
-          agentcasex.ai 简体中文版
+          agentcasex.ai
         </h3>
 
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted">
           <p>
-            本项目是{" "}
-            <a
-              href="https://agentusecases.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-signal underline underline-offset-4"
-            >
-              agentusecases.ai
-            </a>{" "}
-            的 1:1 简体中文前端复刻，仅在本地运行。
+            <strong className="text-text">agentcasex.ai</strong>{" "}
+            是一个持续更新的中文 AI Agent 真实应用案例目录，帮助你快速发现大家正在让智能体解决哪些真实问题。
           </p>
           <p>
-            当前已实时同步原站 <strong className="text-text">{totalCount}</strong>{" "}
-            条真实 AI Agent 应用案例，通过本地代理复用原站的{" "}
-            <code className="rounded bg-panel px-1.5 py-0.5 font-mono text-xs">
-              /api/catalog
-            </code>
-            、
-            <code className="rounded bg-panel px-1.5 py-0.5 font-mono text-xs">
-              /api/trending
-            </code>
-            、
-            <code className="rounded bg-panel px-1.5 py-0.5 font-mono text-xs">
-              /api/votes
-            </code>{" "}
-            以及案例详情页数据。
-          </p>
-          <p>
-            界面、分类体系与交互全面简体中文化，并对展示中的英文用例标题、摘要、详情与提示词自动翻译并持久化缓存至本地{" "}
-            <code className="rounded bg-panel px-1.5 py-0.5 font-mono text-xs">
-              .cache/translations.json
-            </code>
-            ；你也可以随时点击左侧边栏的「中 / EN」按钮切换查看英文原文。
+            当前已收录 <strong className="text-text">{totalCount}</strong>{" "}
+            条真实 AI Agent 应用案例，覆盖办公运营、软件开发、理财规划、研究分析等 11 大分类，每条均附带实践过程、效果复盘与可直接复制的提示词。
           </p>
         </div>
 

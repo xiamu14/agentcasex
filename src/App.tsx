@@ -752,7 +752,7 @@ export default function App() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-28 text-muted">
               <Loader2 className="size-6 animate-spin" />
-              <p className="mt-3 text-sm">正在从 agentusecases.ai 加载最新案例数据...</p>
+              <p className="mt-3 text-sm">正在加载最新案例数据...</p>
             </div>
           ) : error ? (
             <div className="mx-6 my-12 rounded-xl border border-dashed border-line bg-panel p-6 text-center">
