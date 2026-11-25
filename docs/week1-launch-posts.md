@@ -1,39 +1,69 @@
-# 第 1 周种子社区首发文案草稿
+# 第 1 周多渠道首发文案（海外中文 X / Threads / Reddit + 小红书）
 
-## 1. V2EX（分享创造）/ Linux.do
+---
 
-**标题**：做了个中文 AI Agent 真实应用案例库（2350+ 实例 + 可复用 Prompt + 每日晨报）
+## 一、小红书图文贴（可直接复制手动发布）
+
+**标题（选 1 个）**：
+- 《整理了 2350+ 个真实 AI Agent 用法，原来大家都在这样偷懒…》
+- 《别只会拿 AI 聊天了！这 2350+ 个真实智能体案例直接抄作业》
 
 **正文**：
-平时总看到大家在讨论 AI Agent，但真正落地到日常工作和生活里，很多人还是不知道除了写代码还能让它干嘛。
+平时总看到大家讨论 AI Agent，但真落到日常工作和生活里，很多人还是不知道除了写代码还能让它干嘛。
 
-于是整理了一个中文 AI Agent 真实应用案例目录 **agentcases.ai**：
-https://agentcases-ai.vercel.app/
+我整理了一个中文 AI Agent 真实应用案例库 **agentcases.ai**，里面收录了全网 **2,350+ 个真实落地玩法**，涵盖 Claude Code、Codex、OpenClaw、Grok Bot、ChatGPT Agent 等工具：
 
-目前收录了 **2,350+ 个真实案例**，涵盖 Claude Code、Codex、OpenClaw、Grok Bot、ChatGPT Agent 等主流工具，特点如下：
-1. **全中文整理**：不仅有标题和一句话总结，点开详情还有「他们做了什么 / 实际效果如何 / 值得注意」以及**可直接复制的 Prompt**。
-2. **11 大场景分类 + 6 个跨场景专题**：比如「AI 自动交易」「浏览器自动化」「7×24 定时后台」「AI 打电话语音」「多智能体协同」「AI 自动赚钱」。
-3. **「发给你的 Agent」玩法**：点击左侧按钮复制提示词发给你的 Claude/ChatGPT，它会先问几个问题，再从站里挑出最适合你的 5 个案例。
-4. **每 30 分钟自动更新**：基于 Cloudflare Workers + KV 定时增量同步，支持每天早上 8 点邮件订阅精选 5 例。
+🔥 **大家都在让 Agent 干什么？**
+1️⃣ **AI 自动交易**：让多个大模型各自拿模拟盘炒股/做预测市场，11 个 Agent 组队盘前审查
+2️⃣ **浏览器自动化**：自动登录填表、比价下单、蹲守一席难求的餐厅和机票
+3️⃣ **AI 打电话语音**：半秒内应答的语音客服，甚至让 Agent 打电话找客服砍价、预约诊所
+4️⃣ **7×24 定时后台**：在 VPS 上每天早 8 点自动巡检竞品、整理财报、发帖运营
+5️⃣ **多智能体协同**：一群 Agent 分工协作，24 小时跑出一个完整项目或重构代码库
 
-欢迎大家来逛逛、找点灵感，也欢迎提建议！
+✨ **每个案例都附带**：
+- 他们是怎么做的（实操流程）
+- 实际效果与踩坑复盘
+- **可以直接复制给 AI 的中文提示词（Prompt）**
 
----
+💡 **懒得自己翻？**
+站里有个「发给你的 Agent」按钮，点一下复制提示词发给你的 Claude / ChatGPT，它会先问你几个问题，然后自动帮你从 2350+ 个案例里挑出最适合你的 5 个！
 
-## 2. 即刻 / 朋友圈 / 短图文
+🌐 入口放在评论区 / 主页：`https://agentcases-ai.vercel.app/`
 
-做了个持续更新的中文 AI Agent 真实案例库 **agentcases.ai** 👉 https://agentcases-ai.vercel.app/
-
-收录了 2350+ 个人们正在用 Claude Code、OpenClaw、Grok Bot、Codex 做的真实事情：
-- 让 AI 帮找回无人认领的退款和账单折扣
-- 11 个 Agent 组队做盘前交易审查
-- 用语音 Agent 自动打电话预约和砍价
-- 7×24 小时在 VPS 上自动巡检发帖
-
-每条都附带了「实际效果」和「可直接复制的提示词」，懒得自己翻也可以点「发给你的 Agent」，让你的 AI 帮你挑 5 个最适合你的。
+**标签**：
+`#AI智能体 #AIAgent #ClaudeCode #效率神器 #AI自动化 #提示词 #副业灵感 #打工人神器`
 
 ---
 
-## 3. 小红书图文选题（第 1 周 2 篇备选）
-- **选题 A**：《整理了 2300+ 个真实 AI Agent 用法，原来大家都在这样偷懒…》（封面：6 边菱形 Logo + 4 个最反常识的案例截图）
-- **选题 B**：《别只会拿 AI 聊天了！这 5 个开源/自动赚钱 Agent 案例直接抄作业》（附 `agentcases-ai.vercel.app` 搜索与专题入口）
+## 二、X (Twitter) / Threads（海外中文）
+
+**主贴文案**：
+整理了一个中文 AI Agent 真实应用案例目录 **agentcases.ai**，目前已收录 **2,350+** 个大家正在用 AI 智能体做的真实事情（Claude Code / OpenClaw / Grok Bot / Codex 等）：
+
+- 让 11 个 Agent 组队做交易审查
+- 用语音 Agent 自动打电话预约 & 协商账单折扣
+- 7×24 小时自动收集竞品、整理知识库
+- 每条案例均附带实操过程、避坑复盘和可直接复制的 Prompt
+
+懒得自己翻可以点站内的「发给你的 Agent」，让你的 AI 帮你挑最适合你的 5 个：
+👉 https://agentcases-ai.vercel.app/
+
+欢迎来逛逛或订阅每天早上的 5 例精选晨报 🙌
+
+---
+
+## 三、Reddit（英文海外社区：`r/AIAgents` / `r/SideProject` / `r/ClaudeAI`）
+
+**Title**：
+I built a Chinese directory of 2,350+ real-world AI Agent use cases (with reproducible prompts & 6 cross-category collections)
+
+**Body**：
+Hey everyone! Many Chinese builders and non-technical users want to see what people are *actually* doing with AI Agents beyond basic coding, so I built **agentcases.ai** (`https://agentcases-ai.vercel.app/`).
+
+What's inside:
+- **2,350+ real use cases** synced every 30 min via Cloudflare Workers + KV
+- **11 categories & 6 cross-category collections** (AI Trading, Browser Automation, 7×24 Cron/Self-hosted, Voice/Phone Agents, Multi-Agent Swarms, Side-hustle/Monetization)
+- Every case includes **What they did**, **How it went**, **Worth knowing**, and a **copy-ready Prompt**
+- **"Give this to your agent"** button: copies a prompt so your own Claude/ChatGPT interviews you and picks the 5 best-matching cases from the directory
+
+Would love any feedback from the community!

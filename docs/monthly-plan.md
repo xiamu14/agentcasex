@@ -24,7 +24,7 @@
 - [x] **GitHub Actions 每日邮件工作流打通**：配置好密钥并验证每日 08:00（UTC+8）自动推送。
 - [ ] **绑定 Resend 自有发信域名**（避开 `onboarding@resend.dev` 沙盒仅限本人测试的限制，配置 SPF/DKIM/DMARC）。
 - [ ] **提交搜索引擎收录**：向 Google Search Console 与 Bing Webmaster Tools 提交 `https://agentcases-ai.vercel.app/sitemap.xml`。
-- [ ] **种子社区首发**：在 V2EX（分享创造）、即刻（AI 探索圈）、Linux.do 发布首发贴（文案见 `docs/week1-launch-posts.md`）。
+- [ ] **种子社区首发**：在海外中文 **X (Twitter)**、**Threads**、**Reddit**（`r/AIAgents`、`r/SideProject`、`r/ClaudeAI`）与国内 **小红书**（手动发图文）发布首发贴（文案见 `docs/week1-launch-posts.md`）。
 
 ### 第 2 周：内容切片分发与「发给你的 Agent」裂变（目标：1,500 UV / 100 订阅）
 - [ ] **社媒高频切片（每周 4~5 篇）**：从 6 大专题中精选高传播案例，在小红书、即刻、公众号发布图文/短文，文末引导回站内看完整 Prompt 并订阅每日晨报。
