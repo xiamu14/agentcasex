@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bookmark, Check, Copy, ExternalLink, Loader2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, X } from "lucide-react";
 import { CATEGORY_MAP, PLATFORM_LABELS, formatMonthZh } from "../constants";
 import type { UseCase, UseCaseDetail } from "../types";
 import { AgentBadge } from "./AgentBadge";
@@ -286,18 +286,7 @@ export function DetailModal({
               <span>我想要这个 {votes > 0 ? votes : ""}</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => onSave(item.id)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[13.5px] transition-colors ${
-                saved
-                  ? "border-signal bg-signal-panel font-medium text-signal"
-                  : "border-line text-muted hover:border-faint hover:text-text"
-              }`}
-            >
-              <Bookmark className="size-3.5" fill={saved ? "currentColor" : "none"} />
-              <span>{saved ? "已收藏" : "收藏"}</span>
-            </button>
+            <ShareMenu id={item.id} title={title} />
           </div>
         </div>
 
@@ -312,8 +301,6 @@ export function DetailModal({
             <span>←</span>
             <span>上一条</span>
           </button>
-
-          <ShareMenu id={item.id} title={title} compact />
 
           <button
             type="button"

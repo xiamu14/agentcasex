@@ -96,6 +96,20 @@ export default function App() {
 
   const searchRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    const main = mainRef.current;
+    if (!toolbar || !main) return;
+    const updateHeight = () => {
+      main.style.setProperty("--toolbar-h", `${toolbar.offsetHeight}px`);
+    };
+    updateHeight();
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(toolbar);
+    return () => ro.disconnect();
+  }, []);
 
   const {
     tr,
@@ -609,7 +623,10 @@ export default function App() {
           className="min-w-0 flex-1 pb-12 lg:h-dvh lg:overflow-y-auto"
         >
           {/* Sticky Search & Filter Toolbar */}
-          <div className="sticky top-0 z-20 border-b border-dashed border-line bg-bg/95 px-4 py-4 backdrop-blur sm:px-6">
+          <div
+            ref={toolbarRef}
+            className="sticky top-0 z-20 border-b border-dashed border-line bg-bg/95 px-4 py-4 backdrop-blur sm:px-6"
+          >
             <div className="flex items-center gap-2.5">
               {/* Search box */}
               <div className="relative flex flex-1 items-center">
@@ -919,7 +936,7 @@ export default function App() {
               ) : (
                 /* Flat Filtered / Search / New View */
                 <div>
-                  <div className="flex items-center justify-between border-b border-dashed border-line bg-panel/45 px-4 py-3 font-mono text-[11.5px] text-faint sm:px-6">
+                  <div className="sticky top-[var(--toolbar-h,111px)] z-10 flex items-center justify-between border-b border-dashed border-line bg-panel/95 px-4 py-3 font-mono text-[11.5px] text-faint backdrop-blur sm:px-6">
                     <span className="flex items-center gap-2">
                       <span>
                         {isDefaultHome ? (
