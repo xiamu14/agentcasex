@@ -103,7 +103,7 @@ export function Sidebar({
             onClick={onResetAll}
             className="truncate font-display text-[20px] font-bold tracking-tight text-text hover:opacity-80"
           >
-            <span>agentcasex</span>
+            <span>agentcases</span>
             <span className="text-faint">.ai</span>
           </button>
         </div>

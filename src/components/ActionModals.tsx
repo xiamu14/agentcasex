@@ -381,12 +381,12 @@ export function AboutModal({ open, totalCount, onClose }: AboutModalProps) {
           关于本站 · ABOUT
         </p>
         <h3 className="mt-1.5 font-display text-xl font-bold text-text">
-          agentcasex.ai
+          agentcases.ai
         </h3>
 
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted">
           <p>
-            <strong className="text-text">agentcasex.ai</strong>{" "}
+            <strong className="text-text">agentcases.ai</strong>{" "}
             是一个持续更新的中文 AI Agent 真实应用案例目录，帮助你快速发现大家正在让智能体解决哪些真实问题。
           </p>
           <p>

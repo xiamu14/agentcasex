@@ -757,8 +757,8 @@ export async function handleApiRequest(req, res, next) {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.end(`<!doctype html><html lang="zh-CN"><body style="font-family:-apple-system,sans-serif;max-width:480px;margin:60px auto;padding:24px;text-align:center;">
         <h2>已成功退订</h2>
-        <p style="color:#525252;">邮箱 <strong>${email}</strong> 已从 agentcasex.ai 每日精选列表中移除。</p>
-        <p style="margin-top:24px;"><a href="/" style="color:#0b63ce;">返回 agentcasex.ai</a></p>
+        <p style="color:#525252;">邮箱 <strong>${email}</strong> 已从 agentcases.ai 每日精选列表中移除。</p>
+        <p style="margin-top:24px;"><a href="/" style="color:#0b63ce;">返回 agentcases.ai</a></p>
       </body></html>`);
       return;
     }

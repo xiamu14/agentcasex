@@ -173,7 +173,7 @@ export const PLATFORM_LABELS: Record<string, string> = {
   devto: "Dev.to",
 };
 
-export const GIVE_TO_AGENT_PROMPT = `请阅读 https://agentcasex.vercel.app/ 并从中挑选出最适合我的 5 个 AI Agent 应用案例。
+export const GIVE_TO_AGENT_PROMPT = `请阅读 https://agentcases-ai.vercel.app/ 并从中挑选出最适合我的 5 个 AI Agent 应用案例。
 
 先向我提几个关于我的工作内容和希望 AI Agent 帮我处理什么任务的问题。然后浏览这个案例目录，为我选出最匹配的 5 个案例。对于每个案例，请给出中文标题、链接以及一句话说明为什么适合我。
 

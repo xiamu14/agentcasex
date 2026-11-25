@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
-const SITE_URL = process.env.SITE_URL || "https://agentcasex.vercel.app";
-const DEFAULT_FROM = process.env.RESEND_FROM || "agentcasex.ai <onboarding@resend.dev>";
+const SITE_URL = process.env.SITE_URL || "https://agentcases-ai.vercel.app";
+const DEFAULT_FROM = process.env.RESEND_FROM || "agentcases.ai <onboarding@resend.dev>";
 
 function getSecret() {
   return (
@@ -67,10 +67,10 @@ export async function addSubscriberToResend(email) {
     body: JSON.stringify({
       from: DEFAULT_FROM,
       to: [clean],
-      subject: "欢迎订阅 agentcasex.ai 每日 AI Agent 精选",
+      subject: "欢迎订阅 agentcases.ai 每日 AI Agent 精选",
       html: `
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111;line-height:1.65;">
-          <h2 style="margin:0 0 12px;font-size:20px;">欢迎订阅 agentcasex.ai 每日精选</h2>
+          <h2 style="margin:0 0 12px;font-size:20px;">欢迎订阅 agentcases.ai 每日精选</h2>
           <p style="margin:0 0 14px;color:#444;">从明天开始，每天早上 8:00 你都会收到 5 个真实可落地的 AI Agent 应用案例，每个案例均附带可直接复用的提示词。</p>
           <p style="margin:20px 0;">
             <a href="${SITE_URL}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;">浏览全部 AI Agent 案例 →</a>
@@ -146,7 +146,7 @@ export function buildDailyDigestHtml({ items, dateLabel, unsubscribeUrl }) {
             <tr>
               <td style="padding-bottom:16px;border-bottom:1px dashed #d4d4d4;">
                 <div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:0.12em;color:#6b6b6b;text-transform:uppercase;">
-                  AGENTCASEX.AI · 每日精选 (${dateLabel})
+                  AGENTCASES.AI · 每日精选 (${dateLabel})
                 </div>
                 <h1 style="margin:8px 0 6px;font-size:22px;color:#000;line-height:1.3;">
                   今天人们在用 AI Agent 做的 5 件真实事情
@@ -162,10 +162,10 @@ export function buildDailyDigestHtml({ items, dateLabel, unsubscribeUrl }) {
             <tr>
               <td style="padding-top:22px;text-align:center;">
                 <a href="${SITE_URL}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:600;">
-                  去 agentcasex.ai 探索全部案例
+                  去 agentcases.ai 探索全部案例
                 </a>
                 <p style="margin:18px 0 0;font-size:12px;color:#737373;">
-                  收到此邮件是因为你订阅了 agentcasex.ai 每日精选。
+                  收到此邮件是因为你订阅了 agentcases.ai 每日精选。
                   <a href="${unsubscribeUrl}" style="color:#737373;text-decoration:underline;">一键退订</a>
                 </p>
               </td>

@@ -35,5 +35,5 @@ jobs:
           RESEND_AUDIENCE_ID: ${{ env.RESEND_AUDIENCE_ID || secrets.RESEND_AUDIENCE_ID }}
           RESEND_FROM: ${{ env.RESEND_FROM || secrets.RESEND_FROM }}
           UNSUBSCRIBE_SECRET: ${{ env.UNSUBSCRIBE_SECRET || secrets.UNSUBSCRIBE_SECRET }}
-          SITE_URL: https://agentcasex.vercel.app
+          SITE_URL: https://agentcases-ai.vercel.app
         run: node scripts/send-daily-digest.mjs
