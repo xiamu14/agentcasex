@@ -22,8 +22,8 @@
 - [x] **站内基础与 SEO 就绪**：`llms.txt`、`robots.txt`、动态 `sitemap.xml`、JSON-LD、纯中文 KV 边缘直出。
 - [x] **接入轻量访问统计**：集成 `@vercel/analytics` 追踪 UV、来源渠道与热门案例页。
 - [x] **GitHub Actions 每日邮件工作流打通**：配置好密钥并验证每日 08:00（UTC+8）自动推送。
-- [ ] **绑定 Resend 自有发信域名**（避开 `onboarding@resend.dev` 沙盒仅限本人测试的限制，配置 SPF/DKIM/DMARC）。
-- [ ] **提交搜索引擎收录**：向 Google Search Console 与 Bing Webmaster Tools 提交 `https://agentcases-ai.vercel.app/sitemap.xml`。
+- [x] **绑定 Resend 自有发信域名**（避开 `onboarding@resend.dev` 沙盒仅限本人测试的限制，配置 SPF/DKIM/DMARC）。
+- [x] **提交搜索引擎收录**：向 Google Search Console 与 Bing Webmaster Tools 提交 `https://agentcases-ai.vercel.app/sitemap.xml`。
 - [ ] **种子社区首发**：在海外中文 **X (Twitter)**、**Threads**、**Reddit**（`r/AIAgents`、`r/SideProject`、`r/ClaudeAI`）与国内 **小红书**（手动发图文）发布首发贴（文案见 `docs/week1-launch-posts.md`）。
 
 ### 第 2 周：内容切片分发与「发给你的 Agent」裂变（目标：1,500 UV / 100 订阅）
