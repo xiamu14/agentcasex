@@ -5,12 +5,22 @@ import type { UseCase } from "../types";
 
 interface SubscribeModalProps {
   open: boolean;
+  source?: string;
+  hasPendingDetail?: boolean;
   onClose: () => void;
+  onSkipToDetail?: () => void;
 }
 
-export function SubscribeModal({ open, onClose }: SubscribeModalProps) {
+export function SubscribeModal({
+  open,
+  source = "sidebar",
+  hasPendingDetail = false,
+  onClose,
+  onSkipToDetail,
+}: SubscribeModalProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [mode, setMode] = useState<"resend" | "local">("local");
   const [error, setError] = useState("");
 
   if (!open) return null;
@@ -23,12 +33,13 @@ export function SubscribeModal({ open, onClose }: SubscribeModalProps) {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source }),
       });
+      const d = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
         throw new Error(d.error || "订阅失败");
       }
+      if (d.mode === "resend") setMode("resend");
       localStorage.setItem("auc-subscribed", "1");
       setStatus("done");
     } catch (err: unknown) {
@@ -63,17 +74,19 @@ export function SubscribeModal({ open, onClose }: SubscribeModalProps) {
               <Check className="size-5" />
             </div>
             <h3 className="mt-3 font-display text-lg font-bold text-text">
-              订阅成功（本地模式）
+              订阅成功
             </h3>
             <p className="mt-1.5 text-sm text-muted">
-              已记录你的本地订阅状态。每天早上 5 个精选 AI Agent 案例与提示词灵感！
+              {mode === "resend"
+                ? "欢迎邮件已发送至你的邮箱，明天早上 8:00 起将为你推送 5 个精选 AI Agent 用例！"
+                : "已记录订阅状态。每天早上 5 个精选 AI Agent 案例与提示词灵感！"}
             </p>
             <button
               type="button"
-              onClick={onClose}
+              onClick={hasPendingDetail && onSkipToDetail ? onSkipToDetail : onClose}
               className="mt-5 rounded-lg bg-text px-4 py-2 text-sm font-medium text-bg"
             >
-              返回浏览
+              {hasPendingDetail ? "继续查看案例 →" : "返回浏览"}
             </button>
           </div>
         ) : (
@@ -105,6 +118,15 @@ export function SubscribeModal({ open, onClose }: SubscribeModalProps) {
               >
                 {status === "sending" ? "提交中..." : "免费订阅"}
               </button>
+              {hasPendingDetail && onSkipToDetail && (
+                <button
+                  type="button"
+                  onClick={onSkipToDetail}
+                  className="w-full py-1.5 text-center text-xs text-faint hover:text-text"
+                >
+                  暂时跳过，直接查看案例 →
+                </button>
+              )}
             </form>
           </>
         )}

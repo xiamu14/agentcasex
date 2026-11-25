@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 5173",
     "start": "node server/standalone.mjs",
-    "sync": "node server/sync.mjs"
+    "sync": "node server/sync.mjs",
+    "digest:preview": "node scripts/send-daily-digest.mjs --preview",
+    "digest:send": "node scripts/send-daily-digest.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.511.0",

@@ -1,5 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
+import {
+  addSubscriberToResend,
+  isResendConfigured,
+  unsubscribeFromResend,
+  verifyUnsubscribeToken,
+} from "./newsletter.mjs";
 
 const UPSTREAM = "https://agentusecases.ai";
 const CACHE_DIR = process.env.VERCEL
@@ -532,13 +538,62 @@ export async function handleApiRequest(req, res, next) {
       return sendJson(res, 200, { ok: true, item: newItem });
     }
 
-    // 8. Local subscribe mock
+    // 8. Subscribe (Resend Audiences when configured, local .cache fallback otherwise)
     if (pathname === "/api/subscribe" && req.method === "POST") {
       const body = await readRequestBody(req);
-      if (!body?.email || !String(body.email).includes("@")) {
+      const email = String(body?.email || "").trim().toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return sendJson(res, 400, { error: "请输入有效的邮箱地址" });
       }
-      return sendJson(res, 200, { ok: true });
+
+      if (isResendConfigured()) {
+        await addSubscriberToResend(email);
+        return sendJson(res, 200, { ok: true, mode: "resend" });
+      }
+
+      const subscribersFile = cachePath("subscribers.json");
+      const list = readJsonFile(subscribersFile, []);
+      if (!list.some((s) => s.email === email)) {
+        list.push({
+          email,
+          source: body?.source || "unknown",
+          createdAt: new Date().toISOString(),
+        });
+        writeJsonFile(subscribersFile, list);
+      }
+      return sendJson(res, 200, { ok: true, mode: "local" });
+    }
+
+    // 9. One-click unsubscribe
+    if (pathname === "/api/unsubscribe" && (req.method === "GET" || req.method === "POST")) {
+      const email = String(urlObj.searchParams.get("email") || "").trim().toLowerCase();
+      const token = urlObj.searchParams.get("token") || "";
+      if (!email || !verifyUnsubscribeToken(email, token)) {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.end("<h3>退订链接无效或已过期</h3>");
+        return;
+      }
+
+      if (isResendConfigured()) {
+        await unsubscribeFromResend(email);
+      } else {
+        const subscribersFile = cachePath("subscribers.json");
+        const list = readJsonFile(subscribersFile, []);
+        writeJsonFile(
+          subscribersFile,
+          list.filter((s) => s.email !== email)
+        );
+      }
+
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.end(`<!doctype html><html lang="zh-CN"><body style="font-family:-apple-system,sans-serif;max-width:480px;margin:60px auto;padding:24px;text-align:center;">
+        <h2>已成功退订</h2>
+        <p style="color:#525252;">邮箱 <strong>${email}</strong> 已从 agentcasex.ai 每日精选列表中移除。</p>
+        <p style="margin-top:24px;"><a href="/" style="color:#0b63ce;">返回 agentcasex.ai</a></p>
+      </body></html>`);
+      return;
     }
 
     return sendJson(res, 404, { error: "Not found" });

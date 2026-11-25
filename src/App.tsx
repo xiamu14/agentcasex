@@ -88,6 +88,8 @@ export default function App() {
 
   // Modals
   const [activeItem, setActiveItem] = useState<UseCase | null>(null);
+  const [pendingDetailItem, setPendingDetailItem] = useState<UseCase | null>(null);
+  const [subscribeSource, setSubscribeSource] = useState<string>("sidebar");
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -453,7 +455,7 @@ export default function App() {
   ]);
 
   // Handlers
-  function openDetail(item: UseCase) {
+  function openDetailDirect(item: UseCase) {
     setActiveItem(item);
     try {
       const nextPath = `/use-case/${item.id}`;
@@ -461,6 +463,25 @@ export default function App() {
         window.history.pushState({ aucDetail: true }, "", nextPath);
       }
     } catch {}
+  }
+
+  function openDetail(item: UseCase) {
+    try {
+      const openedOne = localStorage.getItem("auc-opened-one") === "1";
+      const prompted = localStorage.getItem("auc-signup-prompted") === "1";
+      const subscribed = localStorage.getItem("auc-subscribed") === "1";
+      if (openedOne && !prompted && !subscribed) {
+        localStorage.setItem("auc-signup-prompted", "1");
+        setPendingDetailItem(item);
+        setSubscribeSource("detail_gate");
+        setSubscribeOpen(true);
+        return;
+      }
+      if (!openedOne) {
+        localStorage.setItem("auc-opened-one", "1");
+      }
+    } catch {}
+    openDetailDirect(item);
   }
 
   function closeDetail() {
@@ -573,7 +594,11 @@ export default function App() {
             mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
           }}
           onResetAll={resetAllFilters}
-          onOpenSubscribe={() => setSubscribeOpen(true)}
+          onOpenSubscribe={() => {
+            setPendingDetailItem(null);
+            setSubscribeSource("sidebar");
+            setSubscribeOpen(true);
+          }}
           onOpenSubmit={() => setSubmitOpen(true)}
           onOpenAbout={() => setAboutOpen(true)}
         />
@@ -1003,7 +1028,18 @@ export default function App() {
 
       <SubscribeModal
         open={subscribeOpen}
-        onClose={() => setSubscribeOpen(false)}
+        source={subscribeSource}
+        hasPendingDetail={Boolean(pendingDetailItem)}
+        onClose={() => {
+          setSubscribeOpen(false);
+          setPendingDetailItem(null);
+        }}
+        onSkipToDetail={() => {
+          const item = pendingDetailItem;
+          setSubscribeOpen(false);
+          setPendingDetailItem(null);
+          if (item) openDetailDirect(item);
+        }}
       />
 
       <SubmitModal
