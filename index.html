@@ -6,9 +6,10 @@
     <title>agentcases.ai：人们正在用 AI Agent 做的真实事情</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://agentcases-ai.vercel.app/" />
+    <link rel="alternate" type="text/plain" title="LLMs.txt" href="/llms.txt" />
     <meta
       name="description"
-      content="精选且持续扫描的真实 AI Agent 应用案例目录，收录 2300+ Claude Code、Codex、OpenClaw、Grok Bot、ChatGPT Agent 等智能体实战用法与可复用提示词。"
+      content="agentcases.ai 是面向中文开发者与效率用户的 AI Agent 真实应用案例目录，收录 2,350+ 个 Claude Code、Codex、OpenClaw、Grok Bot、ChatGPT Agent 等智能体实战用法与可复用提示词。"
     />
     <meta
       name="keywords"
@@ -60,7 +61,78 @@
     </script>
   </head>
   <body class="h-full font-sans text-text bg-bg">
-    <div id="root" class="h-full"></div>
+    <div id="root" class="h-full">
+      <main>
+        <article>
+          <h1>agentcases.ai：中文 AI Agent 真实应用案例与提示词目录</h1>
+          <p>
+            agentcases.ai 是面向中文 AI 开发者、产品团队与效率用户的真实 AI Agent
+            应用案例目录，持续扫描并收录 2,350+ 个可落地的智能体实战用例，覆盖 Claude Code、Codex、OpenClaw、Grok
+            Bot、n8n 与 ChatGPT Agent 等主流工具，每条案例均附实操过程、避坑复盘与可直接复制的中文 Prompt。
+          </p>
+          <section>
+            <h2>agentcases.ai 6 大核心专题合集对比</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>专题合集</th>
+                  <th>核心场景</th>
+                  <th>常见 Agent 工具</th>
+                  <th>典型产出</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>AI 自动交易 (ai-trading)</td>
+                  <td>多智能体盘前审查、预测市场、模拟盘策略执行</td>
+                  <td>Claude Code, OpenClaw, Grok Bot</td>
+                  <td>自动化交易研究与风控报告</td>
+                </tr>
+                <tr>
+                  <td>浏览器自动化 (browser-auto)</td>
+                  <td>自动填表、比价下单、预约抢位与网页巡检</td>
+                  <td>ChatGPT Agent, OpenClaw, Playwright</td>
+                  <td>端到端网页代办执行</td>
+                </tr>
+                <tr>
+                  <td>7×24 定时后台 (self-hosted)</td>
+                  <td>VPS 定时巡检竞品、财报整理与自动运营</td>
+                  <td>OpenClaw, n8n, Cron Agent</td>
+                  <td>每日自动汇总与触发工作流</td>
+                </tr>
+                <tr>
+                  <td>AI 打电话语音 (voice-call)</td>
+                  <td>语音客服应答、电话预约诊所、账单协商砍价</td>
+                  <td>Voice Agent, OpenClaw</td>
+                  <td>低延迟真实语音通话代办</td>
+                </tr>
+                <tr>
+                  <td>多智能体协同 (multi-agent)</td>
+                  <td>多角色 Agent 分工编码、测试、重构与研究</td>
+                  <td>Claude Code, Codex, Swarm</td>
+                  <td>24 小时自动化项目交付</td>
+                </tr>
+                <tr>
+                  <td>AI 自动赚钱 (earn-money)</td>
+                  <td>副业变现、自动化内容与独立产品增长工作流</td>
+                  <td>Claude Code, n8n, ChatGPT Agent</td>
+                  <td>可复用的商业化自动化链路</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section>
+            <h2>开放数据与机器读取入口</h2>
+            <ul>
+              <li><a href="/llms.txt">llms.txt 站点说明</a></li>
+              <li><a href="/sitemap.xml">sitemap.xml 网站地图</a></li>
+              <li><a href="/api/catalog">全部中文用例 JSON 目录</a></li>
+              <li><a href="/api/collections">专题合集列表 JSON</a></li>
+            </ul>
+          </section>
+        </article>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
