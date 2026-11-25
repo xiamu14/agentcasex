@@ -1,0 +1,549 @@
+import fs from "node:fs";
+import path from "node:path";
+
+const UPSTREAM = "https://agentusecases.ai";
+const CACHE_DIR = process.env.VERCEL
+  ? "/tmp/.cache"
+  : path.resolve(process.cwd(), ".cache");
+const DEFAULT_SYNC_MINUTES = Math.max(
+  1,
+  Number(process.env.SYNC_INTERVAL_MINUTES || 30)
+);
+const TTL_MS = DEFAULT_SYNC_MINUTES * 60 * 1000;
+
+const syncState = {
+  enabled: true,
+  intervalMinutes: DEFAULT_SYNC_MINUTES,
+  syncing: false,
+  lastSyncAt: null,
+  nextSyncAt: null,
+  lastError: null,
+  itemCount: 0,
+  newItemsCount: 0,
+};
+
+let autoSyncTimer = null;
+let autoSyncStarted = false;
+
+if (!fs.existsSync(CACHE_DIR)) {
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
+}
+
+function cachePath(name) {
+  return path.join(CACHE_DIR, name);
+}
+
+function readJsonFile(file, fallback) {
+  try {
+    if (fs.existsSync(file)) {
+      return JSON.parse(fs.readFileSync(file, "utf-8"));
+    }
+  } catch {}
+  return fallback;
+}
+
+function writeJsonFile(file, data) {
+  try {
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf-8");
+  } catch (e) {
+    console.error("[cache] write error:", file, e.message);
+  }
+}
+
+// Persistent stores
+const translationCacheFile = cachePath("translations.json");
+const detailCacheFile = cachePath("details.json");
+const localVotesFile = cachePath("local-votes.json");
+const submissionsFile = cachePath("submissions.json");
+
+const translationsMap = readJsonFile(translationCacheFile, {});
+const detailsMap = readJsonFile(detailCacheFile, {});
+let localVotes = readJsonFile(localVotesFile, {});
+let localSubmissions = readJsonFile(submissionsFile, []);
+
+let translationSaveTimer = null;
+function scheduleSaveTranslations() {
+  if (translationSaveTimer) return;
+  translationSaveTimer = setTimeout(() => {
+    translationSaveTimer = null;
+    writeJsonFile(translationCacheFile, translationsMap);
+  }, 800);
+}
+
+const memCache = new Map();
+
+async function fetchUpstreamJson(endpoint, cacheFileName, forceRefresh = false) {
+  const now = Date.now();
+  const mem = memCache.get(endpoint);
+  if (!forceRefresh && mem && now - mem.ts < TTL_MS) {
+    return mem.data;
+  }
+
+  const diskFile = cachePath(cacheFileName);
+  if (!forceRefresh && fs.existsSync(diskFile)) {
+    const stat = fs.statSync(diskFile);
+    if (now - stat.mtimeMs < TTL_MS) {
+      const data = readJsonFile(diskFile, null);
+      if (data !== null) {
+        memCache.set(endpoint, { ts: stat.mtimeMs, data });
+        return data;
+      }
+    }
+  }
+
+  try {
+    const res = await fetch(`${UPSTREAM}${endpoint}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    memCache.set(endpoint, { ts: now, data });
+    writeJsonFile(diskFile, data);
+    return data;
+  } catch (err) {
+    console.warn(`[upstream] failed ${endpoint}:`, err.message);
+    const stale = readJsonFile(diskFile, null);
+    if (stale !== null) return stale;
+    throw err;
+  }
+}
+
+function decodeHtmlEntities(str) {
+  if (!str) return "";
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
+
+function stripTags(html) {
+  return decodeHtmlEntities(html.replace(/<[^>]+>/g, "")).trim();
+}
+
+async function fetchUseCaseDetail(id) {
+  if (detailsMap[id]) {
+    return detailsMap[id];
+  }
+
+  // Check if it's a locally submitted use case
+  const localItem = localSubmissions.find((x) => x.id === id);
+  if (localItem) {
+    return {
+      id,
+      whatTheyDid: localItem.whatTheyDid || localItem.summary,
+      howItWent: localItem.howItWent || "",
+      worthKnowing: localItem.worthKnowing || "",
+      prompt: localItem.prompt || "",
+      originalUrl: localItem.link || localItem.source?.url || null,
+    };
+  }
+
+  const res = await fetch(`${UPSTREAM}/use-case/${encodeURIComponent(id)}`, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+      Accept: "text/html",
+    },
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!res.ok) {
+    throw new Error(`Detail HTTP ${res.status}`);
+  }
+  const html = await res.text();
+
+  const sections = {};
+  const dtRegex = /<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi;
+  let m;
+  while ((m = dtRegex.exec(html)) !== null) {
+    const key = stripTags(m[1]).toLowerCase();
+    const val = stripTags(m[2]);
+    if (key.includes("what they did")) sections.whatTheyDid = val;
+    else if (key.includes("how it went")) sections.howItWent = val;
+    else if (key.includes("worth knowing")) sections.worthKnowing = val;
+  }
+
+  const promptMatch = html.match(/Copy prompt<\/button><\/div><p[^>]*>([\s\S]*?)<\/p>/i);
+  const prompt = promptMatch ? stripTags(promptMatch[1]) : "";
+
+  const origMatch = html.match(/<a[^>]+href="([^"]+)"[^>]*>Read the original/i);
+  const originalUrl = origMatch ? decodeHtmlEntities(origMatch[1]) : null;
+
+  const detail = {
+    id,
+    whatTheyDid: sections.whatTheyDid || "",
+    howItWent: sections.howItWent || "",
+    worthKnowing: sections.worthKnowing || "",
+    prompt,
+    originalUrl,
+  };
+
+  detailsMap[id] = detail;
+  writeJsonFile(detailCacheFile, detailsMap);
+  return detail;
+}
+
+async function translateWithGoogle(text) {
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=${encodeURIComponent(text)}`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`Google HTTP ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data?.[0])) throw new Error("Invalid Google response");
+  return data[0].map((seg) => seg[0] || "").join("");
+}
+
+async function translateWithMyMemory(text) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 480))}&langpair=en|zh-CN`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
+  const data = await res.json();
+  const translated = data?.responseData?.translatedText;
+  if (!translated || translated.includes("MYMEMORY WARNING")) {
+    throw new Error("MyMemory quota/invalid");
+  }
+  return translated;
+}
+
+async function translateBatch(texts) {
+  const result = {};
+  const missing = [];
+
+  for (const raw of texts) {
+    if (typeof raw !== "string") continue;
+    const t = raw.trim();
+    if (!t) continue;
+    if (translationsMap[t]) {
+      result[t] = translationsMap[t];
+    } else if (!missing.includes(t)) {
+      missing.push(t);
+    }
+  }
+
+  if (missing.length === 0) {
+    return result;
+  }
+
+  // Group into safe chunks (<= 1600 chars) to avoid Google Translate truncation/429
+  const SEP = "\n|||AUCSEP|||\n";
+  const chunks = [];
+  let current = [];
+  let currentLen = 0;
+
+  for (const item of missing) {
+    if (current.length >= 8 || currentLen + item.length > 1600) {
+      if (current.length) chunks.push(current);
+      current = [item];
+      currentLen = item.length;
+    } else {
+      current.push(item);
+      currentLen += item.length + SEP.length;
+    }
+  }
+  if (current.length) chunks.push(current);
+
+  for (const group of chunks) {
+    const joined = group.join(SEP);
+    let translatedParts = null;
+
+    try {
+      const batchRes = await translateWithGoogle(joined);
+      const split = batchRes.split(/\s*\|{2,3}\s*AUCSEP\s*\|{2,3}\s*/i);
+      if (split.length === group.length) {
+        translatedParts = split.map((s) => s.trim());
+      }
+    } catch {
+      // Fallback to per-item translation below
+    }
+
+    if (!translatedParts) {
+      translatedParts = [];
+      for (const item of group) {
+        let zh = item;
+        try {
+          zh = await translateWithGoogle(item);
+        } catch {
+          try {
+            zh = await translateWithMyMemory(item);
+          } catch {
+            zh = item;
+          }
+        }
+        translatedParts.push(zh);
+      }
+    }
+
+    group.forEach((orig, i) => {
+      const zh = translatedParts[i] || orig;
+      if (zh && zh !== orig) {
+        translationsMap[orig] = zh;
+      }
+      result[orig] = zh;
+    });
+  }
+
+  scheduleSaveTranslations();
+  return result;
+}
+
+function readRequestBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 2 * 1024 * 1024) {
+        reject(new Error("Body too large"));
+      }
+    });
+    req.on("end", () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function sendJson(res, status, data) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify(data));
+}
+
+export async function runFullSync(reason = "scheduled") {
+  if (syncState.syncing) return getSyncStatus();
+  syncState.syncing = true;
+  syncState.lastError = null;
+  const startedAt = Date.now();
+
+  try {
+    const prevCatalog = readJsonFile(cachePath("catalog.json"), []);
+    const prevIds = new Set(Array.isArray(prevCatalog) ? prevCatalog.map((x) => x.id) : []);
+
+    const [catalog, trending] = await Promise.all([
+      fetchUpstreamJson("/api/catalog", "catalog.json", true),
+      fetchUpstreamJson("/api/trending", "trending.json", true),
+      fetchUpstreamJson("/api/votes", "votes.json", true),
+      fetchUpstreamJson("/api/sponsors", "sponsors.json", true),
+    ]);
+
+    const newItems = Array.isArray(catalog)
+      ? catalog.filter((x) => !prevIds.has(x.id))
+      : [];
+
+    syncState.itemCount = Array.isArray(catalog) ? catalog.length : 0;
+    syncState.newItemsCount = newItems.length;
+    syncState.lastSyncAt = new Date().toISOString();
+    syncState.nextSyncAt = new Date(
+      Date.now() + syncState.intervalMinutes * 60 * 1000
+    ).toISOString();
+
+    // Background incremental translation for trending + newest items
+    const toTranslate = [];
+    if (Array.isArray(trending?.items)) {
+      for (const t of trending.items) {
+        if (t?.usecase?.title) toTranslate.push(t.usecase.title);
+      }
+    }
+    const latestSlice = (newItems.length > 0 ? newItems : (Array.isArray(catalog) ? catalog : [])).slice(0, 15);
+    for (const item of latestSlice) {
+      if (item?.title) toTranslate.push(item.title);
+      if (item?.summary) toTranslate.push(item.summary);
+    }
+    if (toTranslate.length > 0) {
+      await translateBatch(toTranslate).catch(() => {});
+    }
+
+    console.log(
+      `[auto-sync] (${reason}) synced ${syncState.itemCount} items (+${newItems.length} new) in ${Date.now() - startedAt}ms`
+    );
+  } catch (err) {
+    syncState.lastError = err?.message || "Sync failed";
+    syncState.nextSyncAt = new Date(
+      Date.now() + syncState.intervalMinutes * 60 * 1000
+    ).toISOString();
+    console.warn(`[auto-sync] (${reason}) failed:`, syncState.lastError);
+  } finally {
+    syncState.syncing = false;
+  }
+
+  return getSyncStatus();
+}
+
+export function getSyncStatus() {
+  return {
+    ...syncState,
+    translatedCount: Object.keys(translationsMap).length,
+  };
+}
+
+export function startAutoSync() {
+  if (autoSyncStarted) return;
+  autoSyncStarted = true;
+
+  const intervalMs = syncState.intervalMinutes * 60 * 1000;
+  syncState.nextSyncAt = new Date(Date.now() + 2000).toISOString();
+
+  // Initial sync shortly after server startup
+  setTimeout(() => {
+    runFullSync("startup");
+  }, 2000);
+
+  autoSyncTimer = setInterval(() => {
+    runFullSync("scheduled");
+  }, intervalMs);
+
+  // Don't keep CLI processes alive solely because of the interval
+  if (typeof autoSyncTimer.unref === "function") {
+    autoSyncTimer.unref();
+  }
+}
+
+export async function handleApiRequest(req, res, next) {
+  const urlObj = new URL(req.url, "http://localhost");
+  const pathname = urlObj.pathname;
+  const forceRefresh = urlObj.searchParams.get("refresh") === "1";
+
+  if (!pathname.startsWith("/api/")) {
+    return next();
+  }
+
+  try {
+    // 0. Sync status & manual trigger
+    if (pathname === "/api/sync-status" && req.method === "GET") {
+      return sendJson(res, 200, getSyncStatus());
+    }
+
+    if (pathname === "/api/sync-now" && req.method === "POST") {
+      const status = await runFullSync("manual");
+      return sendJson(res, 200, status);
+    }
+    // 1. Catalog (upstream + local submissions)
+    if (pathname === "/api/catalog" && req.method === "GET") {
+      const upstream = await fetchUpstreamJson("/api/catalog", "catalog.json", forceRefresh);
+      const merged = [...localSubmissions, ...(Array.isArray(upstream) ? upstream : [])];
+      return sendJson(res, 200, merged);
+    }
+
+    // 2. Trending
+    if (pathname === "/api/trending" && req.method === "GET") {
+      const data = await fetchUpstreamJson("/api/trending", "trending.json", forceRefresh);
+      return sendJson(res, 200, data);
+    }
+
+    // 3. Sponsors
+    if (pathname === "/api/sponsors" && req.method === "GET") {
+      const data = await fetchUpstreamJson("/api/sponsors", "sponsors.json", forceRefresh);
+      return sendJson(res, 200, data);
+    }
+
+    // 4. Votes (upstream + local delta)
+    if (pathname === "/api/votes" && req.method === "GET") {
+      const upstream = await fetchUpstreamJson("/api/votes", "votes.json", forceRefresh);
+      const merged = { ...(upstream || {}) };
+      for (const [id, delta] of Object.entries(localVotes)) {
+        merged[id] = Math.max(0, (merged[id] || 0) + Number(delta || 0));
+      }
+      return sendJson(res, 200, merged);
+    }
+
+    if (pathname === "/api/votes" && req.method === "POST") {
+      const body = await readRequestBody(req);
+      const { id, on } = body;
+      if (!id) return sendJson(res, 400, { error: "Missing id" });
+      localVotes[id] = (localVotes[id] || 0) + (on ? 1 : -1);
+      writeJsonFile(localVotesFile, localVotes);
+      return sendJson(res, 200, { ok: true, id, delta: localVotes[id] });
+    }
+
+    // 5. Use case detail (proxied & parsed from upstream HTML)
+    if (pathname.startsWith("/api/detail/") && req.method === "GET") {
+      const id = decodeURIComponent(pathname.slice("/api/detail/".length));
+      if (!id) return sendJson(res, 400, { error: "Missing id" });
+      const detail = await fetchUseCaseDetail(id);
+      return sendJson(res, 200, detail);
+    }
+
+    // 6. Batch translate to Simplified Chinese with disk cache
+    if (pathname === "/api/translate" && req.method === "POST") {
+      const body = await readRequestBody(req);
+      const texts = Array.isArray(body?.texts) ? body.texts : [];
+      const translations = await translateBatch(texts);
+      return sendJson(res, 200, { translations });
+    }
+
+    // 7. Submit new use case (saved locally)
+    if (pathname === "/api/submissions" && req.method === "POST") {
+      const body = await readRequestBody(req);
+      const title = String(body.title || "").trim();
+      const summary = String(body.summary || "").trim();
+      if (!title || !summary) {
+        return sendJson(res, 400, { error: "请填写标题和简介" });
+      }
+      const slug =
+        "local-" +
+        Date.now().toString(36) +
+        "-" +
+        Math.random().toString(36).slice(2, 6);
+      const today = new Date().toISOString().slice(0, 10);
+      const toolName = String(body.tool || "Claude Code").trim();
+      const newItem = {
+        id: slug,
+        title,
+        summary,
+        category: body.category || "operations",
+        tools: toolName ? [toolName] : [],
+        link: body.url ? String(body.url).trim() : null,
+        source: {
+          platform: "web",
+          url: body.url ? String(body.url).trim() : "https://agentusecases.ai",
+          author: body.author ? String(body.author).trim() : "本地投稿",
+          score: null,
+          date: today,
+        },
+        addedAt: today,
+        agents: {
+          filter: toolName ? [toolName] : [],
+          labels: toolName ? [toolName] : [],
+          known: Boolean(toolName),
+        },
+        accounts: 1,
+        described: true,
+        submittedBy: body.author ? String(body.author).trim() : "本地用户",
+        whatTheyDid: String(body.whatTheyDid || summary).trim(),
+        howItWent: String(body.howItWent || "").trim(),
+        worthKnowing: String(body.worthKnowing || "").trim(),
+        prompt: String(body.prompt || "").trim(),
+        isLocal: true,
+      };
+      localSubmissions = [newItem, ...localSubmissions];
+      writeJsonFile(submissionsFile, localSubmissions);
+      return sendJson(res, 200, { ok: true, item: newItem });
+    }
+
+    // 8. Local subscribe mock
+    if (pathname === "/api/subscribe" && req.method === "POST") {
+      const body = await readRequestBody(req);
+      if (!body?.email || !String(body.email).includes("@")) {
+        return sendJson(res, 400, { error: "请输入有效的邮箱地址" });
+      }
+      return sendJson(res, 200, { ok: true });
+    }
+
+    return sendJson(res, 404, { error: "Not found" });
+  } catch (err) {
+    console.error("[api error]", pathname, err);
+    return sendJson(res, 500, { error: err?.message || "Internal server error" });
+  }
+}

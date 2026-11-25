@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="system" class="h-full antialiased">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>agentcasex.ai：人们正在用 AI Agent 做的真实事情</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="description"
+      content="精选且持续扫描的真实 AI Agent 应用案例目录，看看大家都在让智能体做什么，发现值得搭建或委托的灵感。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500;600;700&family=Funnel+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("auc-theme");
+          if (t === "light" || t === "dark") {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+          if (localStorage.getItem("auc-sponsor-hidden") === "1") {
+            document.documentElement.setAttribute("data-sponsor-hidden", "");
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="h-full font-sans text-text bg-bg">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

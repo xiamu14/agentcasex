@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Funnel Sans", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-display: "Funnel Display", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-icon: var(--icon);
+  --color-accent: var(--accent);
+  --color-signal: var(--signal);
+  --color-signal-panel: var(--signal-panel);
+  --color-danger: var(--danger);
+  --color-hatch: var(--hatch);
+  --color-wash: var(--wash);
+  --color-wash-strong: var(--wash-strong);
+  --color-raise: var(--raise);
+}
+
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #f6f6f6;
+  --line: #d4d4d4;
+  --text: #000000;
+  --muted: #525252;
+  --faint: #6b6b6b;
+  --icon: #3a3a3a;
+  --accent: #000000;
+  --signal: #0b63ce;
+  --signal-panel: #eef4fb;
+  --danger: #d1242f;
+  --hatch: #ececec;
+  --wash: #0000000a;
+  --wash-strong: #00000014;
+  --raise: #ececec;
+  --sponsor-bar: 0px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --panel: #0d0d0d;
+  --line: #262626;
+  --text: #ffffff;
+  --muted: #a3a3a3;
+  --faint: #858585;
+  --icon: #858585;
+  --accent: #ffffff;
+  --signal: #5aabff;
+  --signal-panel: #060d15;
+  --danger: #ff6b6b;
+  --hatch: #1c1c1c;
+  --wash: #ffffff0d;
+  --wash-strong: #ffffff1a;
+  --raise: #1c1c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #000000;
+    --panel: #0d0d0d;
+    --line: #262626;
+    --text: #ffffff;
+    --muted: #a3a3a3;
+    --faint: #858585;
+    --icon: #858585;
+    --accent: #ffffff;
+    --signal: #5aabff;
+    --signal-panel: #060d15;
+    --danger: #ff6b6b;
+    --hatch: #1c1c1c;
+    --wash: #ffffff0d;
+    --wash-strong: #ffffff1a;
+    --raise: #1c1c1c;
+  }
+}
+
+html {
+  scroll-padding-top: 5rem;
+  scroll-padding-bottom: var(--sponsor-bar);
+}
+
+html:has([data-sponsor-bar]) {
+  --sponsor-bar: 2.75rem;
+}
+
+@media (min-width: 640px) {
+  html:has([data-sponsor-bar]) {
+    --sponsor-bar: 3.25rem;
+  }
+}
+
+html[data-sponsor-hidden] {
+  --sponsor-bar: 0px;
+}
+
+html[data-sponsor-hidden] [data-sponsor-bar] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  background-color: var(--bg);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    var(--hatch) 5px 6px
+  );
+  color: var(--text);
+  padding-inline: 6px;
+  margin: 0;
+}
+
+.frame {
+  min-height: calc(100dvh - var(--sponsor-bar));
+  background: var(--bg);
+  border-inline: 1px dashed var(--line);
+}
+
+.scroll-quiet {
+  scrollbar-width: none;
+}
+
+.scroll-quiet::-webkit-scrollbar {
+  display: none;
+}
+
+::selection {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.mark-edge {
+  box-shadow: inset 0 0 0 1px #00000038;
+}
+
+.tile-placeholder {
+  border-color: #4a4a4a;
+}
+
+:root[data-theme="dark"] .tile-placeholder {
+  border-color: var(--faint);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tile-placeholder {
+    border-color: var(--faint);
+  }
+}
+
+@keyframes vote-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.32);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vote-bump {
+    animation: 0.28s ease-out vote-bump;
+  }
+}
+
+@keyframes sponsor-marquee {
+  0% {
+    transform: translate(0);
+  }
+  to {
+    transform: translate(-50%);
+  }
+}
+
+.sponsor-marquee {
+  touch-action: pan-y;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12px calc(100% - 12px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12px calc(100% - 12px), transparent);
+}
+
+.sponsor-track {
+  width: max-content;
+  height: 100%;
+  animation: 60s linear infinite sponsor-marquee;
+  display: flex;
+}
+
+.sponsor-set {
+  align-items: center;
+  height: 100%;
+  display: flex;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sponsor-marquee:hover .sponsor-track {
+    animation-play-state: paused;
+  }
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+}
