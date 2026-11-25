@@ -15,6 +15,7 @@
     "digest:infisical": "infisical run --env=dev -- node scripts/send-daily-digest.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "lucide-react": "^0.511.0",
     "motion": "^14.14.0",
     "react": "^19.1.0",
