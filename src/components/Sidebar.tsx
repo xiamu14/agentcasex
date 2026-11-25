@@ -155,27 +155,6 @@ export function Sidebar({
         </button>
       </div>
 
-      {/* New Today badge */}
-      <button
-        type="button"
-        onClick={onSelectToday}
-        className={`mt-3 flex w-full items-center justify-between rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors ${
-          timeFilter === "today"
-            ? "bg-signal text-white"
-            : "bg-signal-panel text-signal hover:opacity-90"
-        }`}
-      >
-        <span className="flex items-center gap-2">
-          <span
-            className={`size-1.5 rounded-full ${
-              timeFilter === "today" ? "bg-white" : "bg-signal"
-            }`}
-          />
-          <span>今日新增</span>
-        </span>
-        <span className="font-mono text-xs">{todayCount}</span>
-      </button>
-
       {/* CATEGORIES section */}
       <div className="mt-6 border-t border-dashed border-line pt-5">
         <div className="flex items-center justify-between">

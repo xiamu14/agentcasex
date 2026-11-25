@@ -708,6 +708,29 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
+                  setTimeFilter(timeFilter === "today" ? "all" : "today");
+                  setSpecialView("none");
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-medium transition-colors ${
+                  timeFilter === "today"
+                    ? "bg-signal text-white"
+                    : "bg-signal-panel text-signal hover:opacity-90"
+                }`}
+              >
+                <span
+                  className={`size-1.5 rounded-full ${
+                    timeFilter === "today" ? "bg-white" : "bg-signal"
+                  }`}
+                />
+                <span>今日新增</span>
+                <span className="font-mono text-[11.5px] opacity-80">
+                  {todayCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   setTimeFilter(timeFilter === "week" ? "all" : "week");
                   setSpecialView("none");
                 }}
@@ -722,19 +745,6 @@ export default function App() {
                   {weekCount}
                 </span>
               </button>
-
-              {timeFilter === "today" && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-signal-panel px-3 py-1 text-[12.5px] font-medium text-signal">
-                  <span>今日新增 ({todayCount})</span>
-                  <button
-                    type="button"
-                    onClick={() => setTimeFilter("all")}
-                    aria-label="清除今日筛选"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </span>
-              )}
 
               {selectedAgent && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-signal-panel px-3 py-1 text-[12.5px] font-medium text-signal">
