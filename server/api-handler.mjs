@@ -135,9 +135,27 @@ function stripTags(html) {
   return decodeHtmlEntities(html.replace(/<[^>]+>/g, "")).trim();
 }
 
+async function translateDetailFields(detail) {
+  const fields = [
+    detail.whatTheyDid,
+    detail.howItWent,
+    detail.worthKnowing,
+    detail.prompt,
+  ].filter(Boolean);
+  if (fields.length === 0) return detail;
+  const zhMap = await translateBatch(fields);
+  return {
+    ...detail,
+    whatTheyDid: zhMap[detail.whatTheyDid?.trim()] || detail.whatTheyDid || "",
+    howItWent: zhMap[detail.howItWent?.trim()] || detail.howItWent || "",
+    worthKnowing: zhMap[detail.worthKnowing?.trim()] || detail.worthKnowing || "",
+    prompt: zhMap[detail.prompt?.trim()] || detail.prompt || "",
+  };
+}
+
 async function fetchUseCaseDetail(id) {
   if (detailsMap[id]) {
-    return detailsMap[id];
+    return translateDetailFields(detailsMap[id]);
   }
 
   // Check if it's a locally submitted use case
@@ -182,14 +200,14 @@ async function fetchUseCaseDetail(id) {
   const origMatch = html.match(/<a[^>]+href="([^"]+)"[^>]*>Read the original/i);
   const originalUrl = origMatch ? decodeHtmlEntities(origMatch[1]) : null;
 
-  const detail = {
+  const detail = await translateDetailFields({
     id,
     whatTheyDid: sections.whatTheyDid || "",
     howItWent: sections.howItWent || "",
     worthKnowing: sections.worthKnowing || "",
     prompt,
     originalUrl,
-  };
+  });
 
   detailsMap[id] = detail;
   writeJsonFile(detailCacheFile, detailsMap);
@@ -435,17 +453,34 @@ export async function handleApiRequest(req, res, next) {
       const status = await runFullSync("manual");
       return sendJson(res, 200, status);
     }
-    // 1. Catalog (upstream + local submissions)
+    // 1. Catalog (upstream + local submissions, pre-localized with cached translations)
     if (pathname === "/api/catalog" && req.method === "GET") {
       const upstream = await fetchUpstreamJson("/api/catalog", "catalog.json", forceRefresh);
       const merged = [...localSubmissions, ...(Array.isArray(upstream) ? upstream : [])];
-      return sendJson(res, 200, merged);
+      const localized = merged.map((item) => ({
+        ...item,
+        title: translationsMap[item.title?.trim()] || item.title,
+        summary: translationsMap[item.summary?.trim()] || item.summary,
+      }));
+      return sendJson(res, 200, localized);
     }
 
-    // 2. Trending
+    // 2. Trending (pre-localized with cached translations)
     if (pathname === "/api/trending" && req.method === "GET") {
       const data = await fetchUpstreamJson("/api/trending", "trending.json", forceRefresh);
-      return sendJson(res, 200, data);
+      const localized = {
+        items: (Array.isArray(data?.items) ? data.items : []).map((t) => ({
+          ...t,
+          usecase: t?.usecase
+            ? {
+                ...t.usecase,
+                title: translationsMap[t.usecase.title?.trim()] || t.usecase.title,
+                summary: translationsMap[t.usecase.summary?.trim()] || t.usecase.summary,
+              }
+            : t?.usecase,
+        })),
+      };
+      return sendJson(res, 200, localized);
     }
 
     // 3. Sponsors

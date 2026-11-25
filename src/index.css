@@ -113,11 +113,6 @@ html[data-sponsor-hidden] [data-sponsor-bar] {
 
 body {
   background-color: var(--bg);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent 0 5px,
-    var(--hatch) 5px 6px
-  );
   color: var(--text);
   padding-inline: 6px;
   margin: 0;
@@ -125,7 +120,7 @@ body {
 
 .frame {
   min-height: calc(100dvh - var(--sponsor-bar));
-  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
   border-inline: 1px dashed var(--line);
 }
 
@@ -135,6 +130,33 @@ body {
 
 .scroll-quiet::-webkit-scrollbar {
   display: none;
+}
+
+/* Preline-style rounded-corners custom scrollbar */
+*:not(.scroll-quiet)::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*:not(.scroll-quiet)::-webkit-scrollbar-track {
+  border-radius: 9999px;
+  background: var(--panel);
+}
+
+*:not(.scroll-quiet)::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: var(--line);
+}
+
+*:not(.scroll-quiet)::-webkit-scrollbar-thumb:hover {
+  background: var(--faint);
+}
+
+@supports (scrollbar-width: thin) {
+  *:not(.scroll-quiet) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) var(--panel);
+  }
 }
 
 ::selection {

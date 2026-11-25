@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Check,
   Moon,
-  RefreshCw,
   Sun,
 } from "lucide-react";
 import { CATEGORIES, GIVE_TO_AGENT_PROMPT } from "../constants";
@@ -83,42 +82,41 @@ export function Sidebar({
 
   return (
     <aside className="scroll-quiet flex w-full shrink-0 flex-col border-b border-dashed border-line px-5 py-6 lg:sticky lg:top-0 lg:h-dvh lg:w-[272px] lg:overflow-y-auto lg:border-r lg:border-b-0 xl:w-[288px]">
-      {/* Logo */}
-      <button
-        type="button"
-        onClick={onResetAll}
-        className="w-fit text-left focus:outline-none"
-        title="回到首页"
-      >
-        <Logo className="size-[41px] lg:size-[48px]" />
-      </button>
-
-      {/* Brand title + Theme toggle */}
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={onResetAll}
-          className="font-display text-[21px] font-bold tracking-tight text-text hover:opacity-80"
-        >
-          <span>agentcasex</span>
-          <span className="text-faint">.ai</span>
-        </button>
-
-        <div className="flex items-center gap-1">
+      {/* Header: Logo + Brand title + Theme toggle on one row */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           <button
             type="button"
-            onClick={onToggleTheme}
-            aria-label={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
-            title={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
-            className="inline-flex size-8 items-center justify-center rounded-md border border-line text-muted transition-colors hover:border-faint hover:text-text"
+            onClick={onResetAll}
+            className="shrink-0 text-left focus:outline-none"
+            title="回到首页"
           >
-            {theme === "dark" ? (
-              <Sun className="size-4" />
-            ) : (
-              <Moon className="size-4" />
-            )}
+            <Logo className="size-9 lg:size-10" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onResetAll}
+            className="truncate font-display text-[20px] font-bold tracking-tight text-text hover:opacity-80"
+          >
+            <span>agentcasex</span>
+            <span className="text-faint">.ai</span>
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          aria-label={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
+          title={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-wash hover:text-text"
+        >
+          {theme === "dark" ? (
+            <Sun className="size-4" />
+          ) : (
+            <Moon className="size-4" />
+          )}
+        </button>
       </div>
 
       {/* Tagline */}
@@ -142,7 +140,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={handleGiveToAgent}
-          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-2 text-[13.5px] text-muted transition-colors hover:border-faint hover:text-text"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[13.5px] text-muted transition-colors hover:border-faint hover:text-text"
         >
           {copiedAgentPrompt ? (
             <>
@@ -156,7 +154,7 @@ export function Sidebar({
       </div>
 
       {/* CATEGORIES section */}
-      <div className="mt-6 border-t border-dashed border-line pt-5">
+      <div className="mt-6 pt-1">
         <div className="flex items-center justify-between">
           <h2 className="font-mono text-[11px] font-medium tracking-[0.14em] text-faint uppercase">
             分类 · CATEGORIES
@@ -308,16 +306,6 @@ export function Sidebar({
             className="hover:text-text hover:underline"
           >
             关于本站
-          </button>
-          <button
-            type="button"
-            onClick={onRefreshData}
-            disabled={refreshing}
-            className="inline-flex items-center gap-1 hover:text-text"
-            title="强制同步最新案例数据"
-          >
-            <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
-            <span>{refreshing ? "同步中" : "同步数据"}</span>
           </button>
         </div>
         <p className="mt-2 text-[10.5px] text-faint/80">

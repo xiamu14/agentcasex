@@ -26,6 +26,7 @@ import {
   SubmitModal,
   SubscribeModal,
 } from "./components/ActionModals";
+import { BackgroundBeamsWithCollision } from "./components/BackgroundBeamsWithCollision";
 
 function readLocalSet(key: string): Set<string> {
   try {
@@ -413,8 +414,7 @@ export default function App() {
     !selectedCategory &&
     specialView === "none";
 
-  // Grouped mode when user explicitly switches to "热门" on unfiltered homepage
-  const isGroupedHome = isDefaultHome && sort === "top";
+  const isGroupedHome = false;
 
   const latestPreview = useMemo(() => {
     if (!isGroupedHome) return [];
@@ -560,8 +560,9 @@ export default function App() {
       : null;
 
   return (
-    <div className="min-h-full">
-      <div className="frame mx-auto flex max-w-[1220px] flex-col lg:flex-row">
+    <div className="relative min-h-full">
+      <BackgroundBeamsWithCollision />
+      <div className="frame relative z-10 mx-auto flex max-w-[1220px] flex-col lg:flex-row">
         {/* Left Sidebar */}
         <Sidebar
           theme={theme}
@@ -662,7 +663,11 @@ export default function App() {
               <div className="inline-flex h-10 shrink-0 items-center rounded-lg border border-line bg-bg p-1">
                 <button
                   type="button"
-                  onClick={() => setSort("top")}
+                  onClick={() => {
+                    setSort("top");
+                    setVisibleLimit(30);
+                    mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                   className={`h-8 rounded-md px-3 text-[13px] font-medium transition-colors ${
                     sort === "top"
                       ? "bg-raise text-text"
@@ -673,7 +678,11 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSort("new")}
+                  onClick={() => {
+                    setSort("new");
+                    setVisibleLimit(30);
+                    mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                   className={`h-8 rounded-md px-3 text-[13px] font-medium transition-colors ${
                     sort === "new"
                       ? "bg-raise text-text"
@@ -835,8 +844,8 @@ export default function App() {
             </div>
           ) : (
             <>
-              {/* Trending Today (shown on unfiltered homepage) */}
-              {isDefaultHome && (
+              {/* Trending Today (shown on default chronological homepage) */}
+              {isDefaultHome && sort === "new" && (
                 <TrendingSection
                   items={trending}
                   refDate={refDate}

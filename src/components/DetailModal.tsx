@@ -57,19 +57,22 @@ export function DetailModal({
 
     fetch(`/api/detail/${encodeURIComponent(item.id)}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: UseCaseDetail | null) => {
+      .then(async (data: UseCaseDetail | null) => {
         if (cancelled) return;
-        finish(() => {
-          if (cancelled) return;
-          setDetail(data);
-          if (data) {
+        if (data) {
+          await Promise.resolve(
             queueTranslate([
               data.whatTheyDid,
               data.howItWent,
               data.worthKnowing,
               data.prompt,
-            ]);
-          }
+            ])
+          );
+        }
+        if (cancelled) return;
+        finish(() => {
+          if (cancelled) return;
+          setDetail(data);
         });
       })
       .catch(() => {
