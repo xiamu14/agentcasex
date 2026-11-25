@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Loader2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, X } from "lucide-react";
 import { CATEGORY_MAP, PLATFORM_LABELS, formatMonthZh } from "../constants";
+import { useAnimeAsync } from "../hooks/useAnimeAsync";
 import type { UseCase, UseCaseDetail } from "../types";
 import { AgentBadge } from "./AgentBadge";
 import { ShareMenu } from "./ShareMenu";
@@ -39,13 +40,16 @@ export function DetailModal({
   onSelectAgent,
 }: DetailModalProps) {
   const [detail, setDetail] = useState<UseCaseDetail | null>(null);
-  const [loading, setLoading] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const { showLoading, isPending, start, finish } = useAnimeAsync({
+    delay: 180,
+    period: 360,
+  });
 
   useEffect(() => {
     if (!item) return;
     let cancelled = false;
-    setLoading(true);
+    start();
     setDetail(null);
     setCopiedPrompt(false);
 
@@ -55,25 +59,27 @@ export function DetailModal({
       .then((r) => (r.ok ? r.json() : null))
       .then((data: UseCaseDetail | null) => {
         if (cancelled) return;
-        setDetail(data);
-        if (data) {
-          queueTranslate([
-            data.whatTheyDid,
-            data.howItWent,
-            data.worthKnowing,
-            data.prompt,
-          ]);
-        }
+        finish(() => {
+          if (cancelled) return;
+          setDetail(data);
+          if (data) {
+            queueTranslate([
+              data.whatTheyDid,
+              data.howItWent,
+              data.worthKnowing,
+              data.prompt,
+            ]);
+          }
+        });
       })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+      .catch(() => {
+        if (!cancelled) finish();
       });
 
     return () => {
       cancelled = true;
     };
-  }, [item, queueTranslate]);
+  }, [item, queueTranslate, start, finish]);
 
   useEffect(() => {
     if (!item) return;
@@ -187,12 +193,19 @@ export function DetailModal({
           <div className="my-5 border-t border-dashed border-line" />
 
           {/* Detailed sections */}
-          {loading ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-muted">
-              <Loader2 className="size-4 animate-spin" />
-              <span>正在从原站获取完整案例与提示词...</span>
+          {showLoading ? (
+            <div className="space-y-3 py-4">
+              <div className="flex items-center gap-2 text-xs text-muted">
+                <span className="inline-flex size-2 animate-pulse rounded-full bg-signal" />
+                <span>加载中...</span>
+              </div>
+              <div className="space-y-2 animate-pulse">
+                <div className="h-3 w-24 rounded bg-wash-strong" />
+                <div className="h-3.5 w-full rounded bg-wash" />
+                <div className="h-3.5 w-5/6 rounded bg-wash" />
+              </div>
             </div>
-          ) : (
+          ) : isPending ? null : (
             <dl className="space-y-4 text-[14px] leading-relaxed">
               {whatTheyDid && (
                 <div>

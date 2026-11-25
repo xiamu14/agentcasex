@@ -792,9 +792,25 @@ export default function App() {
 
           {/* Loading / Error states */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-28 text-muted">
-              <Loader2 className="size-6 animate-spin" />
-              <p className="mt-3 text-sm">正在加载最新案例数据...</p>
+            <div>
+              <div className="flex items-center gap-2 border-b border-dashed border-line bg-panel/45 px-4 py-3 font-mono text-[11.5px] text-faint sm:px-6">
+                <span className="inline-flex size-2 animate-pulse rounded-full bg-signal" />
+                <span>加载中...</span>
+              </div>
+              <ul className="divide-y divide-dashed divide-line">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <li key={idx} className="animate-pulse px-4 py-4 sm:px-6">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 size-6 shrink-0 rounded-md bg-wash-strong" />
+                      <div className="flex-1 space-y-2.5">
+                        <div className="h-4 w-3/5 rounded bg-wash-strong" />
+                        <div className="h-3.5 w-11/12 rounded bg-wash" />
+                        <div className="h-3 w-1/3 rounded bg-wash" />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : error ? (
             <div className="mx-6 my-12 rounded-xl border border-dashed border-line bg-panel p-6 text-center">

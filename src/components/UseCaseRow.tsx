@@ -162,7 +162,7 @@ export function UseCaseRow({
                 }}
                 className="inline-flex min-h-8 items-center rounded-md border border-line bg-bg px-2.5 text-[12px] font-medium text-text transition-colors hover:border-faint"
               >
-                查看提示词
+                查看详情
               </button>
               <ShareMenu id={item.id} title={title} />
             </div>
