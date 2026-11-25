@@ -10,7 +10,6 @@ import {
   normalizeAgentName,
 } from "./constants";
 import type {
-  CandidateCollection,
   CollectionDef,
   SortMode,
   SpecialView,
@@ -26,7 +25,6 @@ import { UseCaseRow } from "./components/UseCaseRow";
 import { DetailModal } from "./components/DetailModal";
 import {
   AboutModal,
-  CollectionReviewModal,
   SubmitModal,
   SubscribeModal,
 } from "./components/ActionModals";
@@ -98,12 +96,8 @@ export default function App() {
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [collectionReviewOpen, setCollectionReviewOpen] = useState(false);
   const [activeCollections, setActiveCollections] =
     useState<CollectionDef[]>(DEFAULT_COLLECTIONS);
-  const [pendingCollections, setPendingCollections] = useState<
-    CandidateCollection[]
-  >([]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -165,9 +159,6 @@ export default function App() {
 
       if (colData && Array.isArray(colData.active)) {
         setActiveCollections(colData.active);
-        setPendingCollections(
-          Array.isArray(colData.pending) ? colData.pending : []
-        );
       }
 
       const trendItems: TrendingItem[] = Array.isArray(trendData?.items)
@@ -605,7 +596,6 @@ export default function App() {
           todayCount={todayCount}
           savedCount={savedIds.size}
           collections={collectionsWithCounts}
-          pendingCollectionsCount={pendingCollections.length}
           agentCounts={agentCounts}
           categoryCounts={categoryCounts}
           selectedAgent={selectedAgent}
@@ -647,7 +637,6 @@ export default function App() {
           }}
           onOpenSubmit={() => setSubmitOpen(true)}
           onOpenAbout={() => setAboutOpen(true)}
-          onOpenCollectionReview={() => setCollectionReviewOpen(true)}
         />
 
         {/* Right Main Content */}
@@ -1143,24 +1132,6 @@ export default function App() {
         open={aboutOpen}
         totalCount={catalog.length}
         onClose={() => setAboutOpen(false)}
-      />
-
-      <CollectionReviewModal
-        open={collectionReviewOpen}
-        candidates={pendingCollections}
-        onClose={() => setCollectionReviewOpen(false)}
-        onReviewed={async (id, action, label) => {
-          const res = await fetch("/api/collections/review", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, action, label }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data.active)) setActiveCollections(data.active);
-            setPendingCollections((prev) => prev.filter((c) => c.id !== id));
-          }
-        }}
       />
     </div>
   );

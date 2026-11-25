@@ -25,7 +25,6 @@ interface SidebarProps {
   todayCount: number;
   savedCount: number;
   collections: Array<CollectionDef & { count: number }>;
-  pendingCollectionsCount: number;
   agentCounts: AgentCount[];
   categoryCounts: Record<string, number>;
   selectedAgent: string | null;
@@ -40,7 +39,6 @@ interface SidebarProps {
   onOpenSubscribe: () => void;
   onOpenSubmit: () => void;
   onOpenAbout: () => void;
-  onOpenCollectionReview: () => void;
 }
 
 export function Sidebar({
@@ -54,7 +52,6 @@ export function Sidebar({
   todayCount,
   savedCount,
   collections,
-  pendingCollectionsCount,
   agentCounts,
   categoryCounts,
   selectedAgent,
@@ -69,7 +66,6 @@ export function Sidebar({
   onOpenSubscribe,
   onOpenSubmit,
   onOpenAbout,
-  onOpenCollectionReview,
 }: SidebarProps) {
   const [showAllAgents, setShowAllAgents] = useState(false);
   const [copiedAgentPrompt, setCopiedAgentPrompt] = useState(false);
@@ -266,20 +262,9 @@ export function Sidebar({
 
       {/* COLLECTIONS section */}
       <div className="mt-6 border-t border-dashed border-line pt-5">
-        <div className="flex items-center justify-between">
-          <h2 className="font-mono text-[11px] font-medium tracking-[0.14em] text-faint uppercase">
-            专题合集 · COLLECTIONS
-          </h2>
-          {pendingCollectionsCount > 0 && (
-            <button
-              type="button"
-              onClick={onOpenCollectionReview}
-              className="rounded bg-signal-panel px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-signal hover:opacity-90"
-            >
-              待审核 {pendingCollectionsCount}
-            </button>
-          )}
-        </div>
+        <h2 className="font-mono text-[11px] font-medium tracking-[0.14em] text-faint uppercase">
+          专题合集 · COLLECTIONS
+        </h2>
         <ul className="mt-2.5 space-y-0.5">
           {collections.map((col) => {
             const viewKey = `collection:${col.id}` as SpecialView;
