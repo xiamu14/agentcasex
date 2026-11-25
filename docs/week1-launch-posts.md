@@ -28,7 +28,7 @@
 💡 **懒得自己翻？**
 站里有个「发给你的 Agent」按钮，点一下复制提示词发给你的 Claude / ChatGPT，它会先问你几个问题，然后自动帮你从 2350+ 个案例里挑出最适合你的 5 个！
 
-🌐 入口放在评论区 / 主页：`https://agentcases-ai.vercel.app/`
+🌐 入口放在评论区 / 主页：`https://agentcases-ai.vercel.app/?utm_source=xiaohongshu&utm_medium=social&utm_campaign=week1_launch`
 
 **标签**：
 `#AI智能体 #AIAgent #ClaudeCode #效率神器 #AI自动化 #提示词 #副业灵感 #打工人神器`
@@ -46,7 +46,7 @@
 - 每条案例均附带实操过程、避坑复盘和可直接复制的 Prompt
 
 懒得自己翻可以点站内的「发给你的 Agent」，让你的 AI 帮你挑最适合你的 5 个：
-👉 https://agentcases-ai.vercel.app/
+👉 https://agentcases-ai.vercel.app/?utm_source=threads&utm_medium=social&utm_campaign=week1_launch
 
 欢迎来逛逛或订阅每天早上的 5 例精选晨报 🙌
 
@@ -58,7 +58,7 @@
 I built a Chinese directory of 2,350+ real-world AI Agent use cases (with reproducible prompts & 6 cross-category collections)
 
 **Body**：
-Hey everyone! Many Chinese builders and non-technical users want to see what people are *actually* doing with AI Agents beyond basic coding, so I built **agentcases.ai** (`https://agentcases-ai.vercel.app/`).
+Hey everyone! Many Chinese builders and non-technical users want to see what people are *actually* doing with AI Agents beyond basic coding, so I built **agentcases.ai** (`https://agentcases-ai.vercel.app/?utm_source=reddit&utm_medium=social&utm_campaign=week1_launch`).
 
 What's inside:
 - **2,350+ real use cases** synced every 30 min via Cloudflare Workers + KV
