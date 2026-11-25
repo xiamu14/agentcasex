@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Bookmark,
   Check,
   Moon,
   RefreshCw,
@@ -315,32 +314,6 @@ export function Sidebar({
                 }`}
               >
                 {aiTradingCount}
-              </span>
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              onClick={() =>
-                onSelectSpecial(specialView === "saved" ? "none" : "saved")
-              }
-              className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[13px] transition-colors ${
-                specialView === "saved"
-                  ? "bg-text font-medium text-bg"
-                  : "text-muted hover:bg-wash hover:text-text"
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                <Bookmark className="size-3.5" />
-                <span>我的收藏</span>
-              </span>
-              <span
-                className={`font-mono text-[11.5px] ${
-                  specialView === "saved" ? "text-bg/80" : "text-faint"
-                }`}
-              >
-                {savedCount}
               </span>
             </button>
           </li>

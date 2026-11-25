@@ -639,7 +639,7 @@ export default function App() {
                     setQuery(e.target.value);
                     setVisibleLimit(30);
                   }}
-                  placeholder="搜索 AI Agent 用例（支持中英文）"
+                  placeholder="搜索 AI Agent 用例"
                   className="h-10 w-full rounded-lg border border-line bg-panel pr-14 pl-9 text-[14px] text-text placeholder:text-faint focus:border-faint focus:bg-bg focus:outline-none"
                 />
                 {query ? (
