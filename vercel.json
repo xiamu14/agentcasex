@@ -1,7 +1,15 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/llm.txt",
+      "destination": "/llms.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/((?!api/|llms\\.txt|robots\\.txt|sitemap\\.xml|favicon\\.svg|assets/).*)",
       "destination": "/index.html"
     }
   ]

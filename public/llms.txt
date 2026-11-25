@@ -1,0 +1,43 @@
+# agentcases.ai
+
+> 人们正在用 AI Agent 做的真实事情 —— 持续扫描、精选整理的中文 AI Agent 实战应用案例目录，收录 2,350+ 真实用例，涵盖 11 大业务分类、6 大跨分类专题合集与可直接复用的提示词。
+
+## 网站概览
+- 主站地址: https://agentcases-ai.vercel.app/
+- 站点语言: 简体中文 (zh-CN)
+- 数据更新: 每 30 分钟自动同步与增量翻译
+- 核心功能: 真实用例检索、按 AI 代理筛选（Claude / Claude Code、Grok Bot、OpenClaw、Codex、n8n、ChatGPT、Gemini 等）、按场景分类与专题合集浏览、查看完整实践复盘与提示词
+
+## 供 AI Agent 读取的开放接口 (JSON)
+- 全部中文用例目录: https://agentcases-ai.vercel.app/api/catalog
+- 今日热门用例: https://agentcases-ai.vercel.app/api/trending
+- 专题合集定义与状态: https://agentcases-ai.vercel.app/api/collections
+- 单个用例详情与提示词: https://agentcases-ai.vercel.app/api/detail/{id}
+- 网站地图: https://agentcases-ai.vercel.app/sitemap.xml
+
+## 11 大业务分类
+- 理财、账单与权益 (`money`)
+- 生活管理与居家 (`life`)
+- 购物与跑腿代办 (`shopping`)
+- 旅行与行程预订 (`travel`)
+- 办公与运营效率 (`operations`)
+- 销售、营销与客服 (`growth`)
+- 研究与知识管理 (`research`)
+- 内容与创意制作 (`creative`)
+- 软件开发与运维 (`software`)
+- 游戏与沙盒模拟 (`games`)
+- 安全、科学与硬件 (`science`)
+
+## 6 大跨分类专题合集
+- AI 自动交易 (`ai-trading`)
+- 浏览器自动化 (`browser-auto`)
+- 7×24 定时后台 (`self-hosted`)
+- AI 打电话语音 (`voice-call`)
+- 多智能体协同 (`multi-agent`)
+- AI 自动赚钱 (`earn-money`)
+
+## 推荐 AI Agent 使用方式
+如果用户要求你“从 agentcases.ai 推荐适合我的用例”：
+1. 请求 `https://agentcases-ai.vercel.app/api/catalog` 获取完整中文 JSON 列表（每个对象包含 `id`、`title`、`summary`、`category`、`tools`、`collections`、`addedAt`）。
+2. 根据用户的工作流或需求筛选最匹配的 5 条，并返回中文标题、直达链接 `https://agentcases-ai.vercel.app/use-case/{id}` 以及推荐理由。
+3. 如需完整实践细节和 Prompt，可进一步请求 `https://agentcases-ai.vercel.app/api/detail/{id}`。

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://agentcases-ai.vercel.app/sitemap.xml
+# LLMs: https://agentcases-ai.vercel.app/llms.txt

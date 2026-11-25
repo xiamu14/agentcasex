@@ -308,6 +308,22 @@ export default function App() {
     return activeCollections.find((c) => c.id === id) || null;
   }, [specialView, activeCollections]);
 
+  // Sync document.title for SEO & browser tab clarity
+  useEffect(() => {
+    const baseTitle = "agentcases.ai：人们正在用 AI Agent 做的真实事情";
+    if (activeItem) {
+      document.title = `${tr(activeItem.title)} | agentcases.ai`;
+    } else if (activeCollectionObj) {
+      document.title = `${activeCollectionObj.label} | agentcases.ai`;
+    } else if (selectedCategory && CATEGORY_MAP[selectedCategory]) {
+      document.title = `${CATEGORY_MAP[selectedCategory].label} | agentcases.ai`;
+    } else if (selectedAgent) {
+      document.title = `${selectedAgent} 用例 | agentcases.ai`;
+    } else {
+      document.title = baseTitle;
+    }
+  }, [activeItem, activeCollectionObj, selectedCategory, selectedAgent, tr]);
+
   // Agent counts (sorted descending, merging Claude & Claude Code, placing "Other or custom" at the end)
   const agentCounts = useMemo(() => {
     const map = new Map<string, number>();
