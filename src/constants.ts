@@ -1,4 +1,4 @@
-import type { SponsorItem, UseCase } from "./types";
+import type { CollectionDef, SponsorItem, UseCase } from "./types";
 
 export interface CategoryMeta {
   id: string;
@@ -201,11 +201,62 @@ export const DEFAULT_SPONSORS: SponsorItem[] = [
   },
 ];
 
+export const DEFAULT_COLLECTIONS: CollectionDef[] = [
+  {
+    id: "ai-trading",
+    label: "AI 自动交易",
+    pattern:
+      "\\b(trad(e|ing|er)|stock|stocks|portfolio|alpaca|crypto|bitcoin|polymarket|options|hedge fund|backtest|investing|quant|ticker)\\b|股票|交易|投资组合|量化|期权",
+    description: "股票、ETF、期权、预测市场等自动交易决策",
+  },
+  {
+    id: "browser-auto",
+    label: "浏览器自动化",
+    pattern:
+      "\\b(browser|chrome|playwright|puppeteer|fill out|scrape|scraping|headless|browser-use)\\b|浏览器|自动填表|网页抓取|无头浏览器",
+    description: "Chrome / Playwright 模拟操作、自动填表与抓取",
+  },
+  {
+    id: "self-hosted",
+    label: "7×24 定时后台",
+    pattern:
+      "\\b(24/7|24-hour|cron|nightly|every morning|every day|every two hours|self-hosted|vps|daemon|heartbeat)\\b|每天早上|每晚|定时|每两小时|24小时|自托管",
+    description: "无人值守定时任务、每日巡检与常驻后台代理",
+  },
+  {
+    id: "voice-call",
+    label: "AI 打电话语音",
+    pattern:
+      "\\b(phone call|cold call|call (the|a|an|my)|vapi|twilio|voice agent|voicemail)\\b|打电话|电话语音|语音代理|致电",
+    description: "语音代理自动致电预约、客服通话与砍价协商",
+  },
+  {
+    id: "multi-agent",
+    label: "多智能体协同",
+    pattern:
+      "\\b(multi-agent|swarm|team of|orchestrat|subagent|11-agent|parallel agents|agent team|crew)\\b|多智能体|多代理|并行代理|代理团队",
+    description: "Agent Swarm 与多角色分工协作流水线",
+  },
+  {
+    id: "earn-money",
+    label: "AI 自动赚钱",
+    pattern:
+      "\\b(earn money|freelance|upwork|fiverr|side hustle|revenue|monetize|sell services|make money|bounty)\\b|赚钱|接单|自由职业|副业|变现",
+    description: "自由职业接单、自动交付服务与副业变现",
+  },
+];
+
+export function matchesCollection(item: UseCase, col: CollectionDef): boolean {
+  const text = `${item.title || ""} ${item.summary || ""}`;
+  try {
+    return new RegExp(col.pattern, "i").test(text);
+  } catch {
+    return false;
+  }
+}
+
 export function isAiTradingCase(item: UseCase): boolean {
-  const text = `${item.title} ${item.summary}`.toLowerCase();
-  return /\b(trad(e|ing|er)|stock|stocks|portfolio|alpaca|crypto|bitcoin|polymarket|options|hedge fund|backtest|investing|quant|ticker)\b/.test(
-    text
-  );
+  return matchesCollection(item, DEFAULT_COLLECTIONS[0]);
 }
 
 export function formatMonthZh(dateStr?: string | null): string {

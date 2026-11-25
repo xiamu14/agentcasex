@@ -5,7 +5,7 @@ import {
   Sun,
 } from "lucide-react";
 import { CATEGORIES, GIVE_TO_AGENT_PROMPT } from "../constants";
-import type { SpecialView, SyncStatus, TimeFilter } from "../types";
+import type { CollectionDef, SpecialView, SyncStatus, TimeFilter } from "../types";
 import { AgentBadge } from "./AgentBadge";
 import { Logo } from "./Logo";
 
@@ -24,7 +24,8 @@ interface SidebarProps {
   syncStatus: SyncStatus | null;
   todayCount: number;
   savedCount: number;
-  aiTradingCount: number;
+  collections: Array<CollectionDef & { count: number }>;
+  pendingCollectionsCount: number;
   agentCounts: AgentCount[];
   categoryCounts: Record<string, number>;
   selectedAgent: string | null;
@@ -39,6 +40,7 @@ interface SidebarProps {
   onOpenSubscribe: () => void;
   onOpenSubmit: () => void;
   onOpenAbout: () => void;
+  onOpenCollectionReview: () => void;
 }
 
 export function Sidebar({
@@ -51,7 +53,8 @@ export function Sidebar({
   syncStatus,
   todayCount,
   savedCount,
-  aiTradingCount,
+  collections,
+  pendingCollectionsCount,
   agentCounts,
   categoryCounts,
   selectedAgent,
@@ -66,6 +69,7 @@ export function Sidebar({
   onOpenSubscribe,
   onOpenSubmit,
   onOpenAbout,
+  onOpenCollectionReview,
 }: SidebarProps) {
   const [showAllAgents, setShowAllAgents] = useState(false);
   const [copiedAgentPrompt, setCopiedAgentPrompt] = useState(false);
@@ -262,38 +266,49 @@ export function Sidebar({
 
       {/* COLLECTIONS section */}
       <div className="mt-6 border-t border-dashed border-line pt-5">
-        <h2 className="font-mono text-[11px] font-medium tracking-[0.14em] text-faint uppercase">
-          专题合集 · COLLECTIONS
-        </h2>
-        <ul className="mt-2.5 space-y-0.5">
-          <li>
+        <div className="flex items-center justify-between">
+          <h2 className="font-mono text-[11px] font-medium tracking-[0.14em] text-faint uppercase">
+            专题合集 · COLLECTIONS
+          </h2>
+          {pendingCollectionsCount > 0 && (
             <button
               type="button"
-              onClick={() =>
-                onSelectSpecial(
-                  specialView === "collection:ai-trading"
-                    ? "none"
-                    : "collection:ai-trading"
-                )
-              }
-              className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[13px] transition-colors ${
-                specialView === "collection:ai-trading"
-                  ? "bg-text font-medium text-bg"
-                  : "text-muted hover:bg-wash hover:text-text"
-              }`}
+              onClick={onOpenCollectionReview}
+              className="rounded bg-signal-panel px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-signal hover:opacity-90"
             >
-              <span>AI 自动交易与量化</span>
-              <span
-                className={`font-mono text-[11.5px] ${
-                  specialView === "collection:ai-trading"
-                    ? "text-bg/80"
-                    : "text-faint"
-                }`}
-              >
-                {aiTradingCount}
-              </span>
+              待审核 {pendingCollectionsCount}
             </button>
-          </li>
+          )}
+        </div>
+        <ul className="mt-2.5 space-y-0.5">
+          {collections.map((col) => {
+            const viewKey = `collection:${col.id}` as SpecialView;
+            const active = specialView === viewKey;
+            return (
+              <li key={col.id}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSelectSpecial(active ? "none" : viewKey)
+                  }
+                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[13px] transition-colors ${
+                    active
+                      ? "bg-text font-medium text-bg"
+                      : "text-muted hover:bg-wash hover:text-text"
+                  }`}
+                >
+                  <span className="truncate">{col.label}</span>
+                  <span
+                    className={`ml-2 shrink-0 font-mono text-[11.5px] ${
+                      active ? "text-bg/80" : "text-faint"
+                    }`}
+                  >
+                    {col.count}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
 

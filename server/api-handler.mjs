@@ -61,6 +61,88 @@ const translationCacheFile = cachePath("translations.json");
 const detailCacheFile = cachePath("details.json");
 const localVotesFile = cachePath("local-votes.json");
 const submissionsFile = cachePath("submissions.json");
+const collectionsConfigFile = cachePath("collections-config.json");
+const collectionsRejectedFile = cachePath("collections-rejected.json");
+
+const DEFAULT_COLLECTIONS = [
+  {
+    id: "ai-trading",
+    label: "AI 自动交易",
+    pattern:
+      "\\b(trad(e|ing|er)|stock|stocks|portfolio|alpaca|crypto|bitcoin|polymarket|options|hedge fund|backtest|investing|quant|ticker)\\b|股票|交易|投资组合|量化|期权",
+    description: "股票、ETF、期权、预测市场等自动交易决策",
+  },
+  {
+    id: "browser-auto",
+    label: "浏览器自动化",
+    pattern:
+      "\\b(browser|chrome|playwright|puppeteer|fill out|scrape|scraping|headless|browser-use)\\b|浏览器|自动填表|网页抓取|无头浏览器",
+    description: "Chrome / Playwright 模拟操作、自动填表与抓取",
+  },
+  {
+    id: "self-hosted",
+    label: "7×24 定时后台",
+    pattern:
+      "\\b(24/7|24-hour|cron|nightly|every morning|every day|every two hours|self-hosted|vps|daemon|heartbeat)\\b|每天早上|每晚|定时|每两小时|24小时|自托管",
+    description: "无人值守定时任务、每日巡检与常驻后台代理",
+  },
+  {
+    id: "voice-call",
+    label: "AI 打电话语音",
+    pattern:
+      "\\b(phone call|cold call|call (the|a|an|my)|vapi|twilio|voice agent|voicemail)\\b|打电话|电话语音|语音代理|致电",
+    description: "语音代理自动致电预约、客服通话与砍价协商",
+  },
+  {
+    id: "multi-agent",
+    label: "多智能体协同",
+    pattern:
+      "\\b(multi-agent|swarm|team of|orchestrat|subagent|11-agent|parallel agents|agent team|crew)\\b|多智能体|多代理|并行代理|代理团队",
+    description: "Agent Swarm 与多角色分工协作流水线",
+  },
+  {
+    id: "earn-money",
+    label: "AI 自动赚钱",
+    pattern:
+      "\\b(earn money|freelance|upwork|fiverr|side hustle|revenue|monetize|sell services|make money|bounty)\\b|赚钱|接单|自由职业|副业|变现",
+    description: "自由职业接单、自动交付服务与副业变现",
+  },
+];
+
+const CANDIDATE_RADAR = [
+  {
+    id: "mcp-tools",
+    label: "MCP 工具链",
+    pattern: "\\b(mcp|model context protocol)\\b|MCP",
+    description: "基于 Model Context Protocol 连接外部工具与本地数据",
+  },
+  {
+    id: "local-llm",
+    label: "本地开源模型",
+    pattern: "\\b(ollama|local llm|qwen|llama|deepseek|vllm|lm studio)\\b|本地模型|开源模型",
+    description: "使用 Ollama、Qwen、DeepSeek 等本地推理驱动 Agent",
+  },
+  {
+    id: "notion-obsidian",
+    label: "双链笔记整理",
+    pattern: "\\b(obsidian|notion|second brain|knowledge graph)\\b|双链|知识库",
+    description: "自动同步整理 Notion 与 Obsidian 个人知识库",
+  },
+  {
+    id: "iot-hardware",
+    label: "硬件与物联网",
+    pattern: "\\b(raspberry pi|arduino|esp32|smart home|home assistant|3d print|cad|iot)\\b|树莓派|智能家居|硬件|物联网",
+    description: "智能家居控制、嵌入式硬件与 3D/CAD 驱动",
+  },
+];
+
+function matchCol(item, col) {
+  try {
+    return new RegExp(col.pattern, "i").test(`${item.title || ""} ${item.summary || ""}`);
+  } catch {
+    return false;
+  }
+}
 
 const translationsMap = readJsonFile(translationCacheFile, {});
 const detailsMap = readJsonFile(detailCacheFile, {});
@@ -452,6 +534,56 @@ export async function handleApiRequest(req, res, next) {
     if (pathname === "/api/sync-now" && req.method === "POST") {
       const status = await runFullSync("manual");
       return sendJson(res, 200, status);
+    }
+
+    // 0b. Collections & candidate review
+    if (pathname === "/api/collections" && req.method === "GET") {
+      const active = readJsonFile(collectionsConfigFile, DEFAULT_COLLECTIONS);
+      const rejected = new Set(readJsonFile(collectionsRejectedFile, []));
+      const activeIds = new Set(active.map((c) => c.id));
+      const upstream = await fetchUpstreamJson("/api/catalog", "catalog.json", false).catch(() => []);
+      const localized = (Array.isArray(upstream) ? upstream : []).map((item) => ({
+        ...item,
+        title: translationsMap[item.title?.trim()] || item.title,
+        summary: translationsMap[item.summary?.trim()] || item.summary,
+      }));
+      const pending = CANDIDATE_RADAR.filter(
+        (c) => !activeIds.has(c.id) && !rejected.has(c.id)
+      )
+        .map((c) => {
+          const matched = localized.filter((it) => matchCol(it, c));
+          return {
+            ...c,
+            count: matched.length,
+            samples: matched.slice(0, 3).map((m) => String(m.title || "")),
+            discoveredAt: new Date().toISOString(),
+          };
+        })
+        .filter((c) => c.count >= 10);
+      return sendJson(res, 200, { active, pending });
+    }
+
+    if (pathname === "/api/collections/review" && req.method === "POST") {
+      const body = await readRequestBody(req);
+      if (!body?.id || (body.action !== "approve" && body.action !== "reject")) {
+        return sendJson(res, 400, { error: "Invalid review payload" });
+      }
+      const active = readJsonFile(collectionsConfigFile, [...DEFAULT_COLLECTIONS]);
+      const rejected = readJsonFile(collectionsRejectedFile, []);
+      if (body.action === "approve") {
+        const candidate = CANDIDATE_RADAR.find((c) => c.id === body.id);
+        if (candidate && !active.some((c) => c.id === candidate.id)) {
+          active.push({
+            ...candidate,
+            label: String(body.label || candidate.label).trim().slice(0, 10),
+          });
+          writeJsonFile(collectionsConfigFile, active);
+        }
+      } else if (!rejected.includes(body.id)) {
+        rejected.push(body.id);
+        writeJsonFile(collectionsRejectedFile, rejected);
+      }
+      return sendJson(res, 200, { ok: true, active });
     }
     // 1. Catalog (upstream + local submissions, pre-localized with cached translations)
     if (pathname === "/api/catalog" && req.method === "GET") {

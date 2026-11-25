@@ -170,7 +170,7 @@ export function UseCaseRow({
         </div>
 
         {/* Right vote & save buttons */}
-        <div className="relative z-10 flex shrink-0 flex-col items-center gap-1 sm:flex-row">
+        <div className="relative flex shrink-0 flex-col items-center gap-1 sm:flex-row">
           <button
             type="button"
             aria-pressed={voted}

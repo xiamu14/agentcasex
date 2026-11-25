@@ -62,6 +62,19 @@ export interface SyncStatus {
   translatedCount: number;
 }
 
+export interface CollectionDef {
+  id: string;
+  label: string;
+  pattern: string;
+  description?: string;
+}
+
+export interface CandidateCollection extends CollectionDef {
+  count: number;
+  samples: string[];
+  discoveredAt: string;
+}
+
 export type SortMode = "top" | "new";
 export type TimeFilter = "all" | "week" | "today";
-export type SpecialView = "none" | "saved" | "collection:ai-trading";
+export type SpecialView = "none" | "saved" | `collection:${string}`;

@@ -4,6 +4,94 @@ interface Env {
   CACHE: KVNamespace;
 }
 
+interface CollectionDef {
+  id: string;
+  label: string;
+  pattern: string;
+  description?: string;
+}
+
+const DEFAULT_COLLECTIONS: CollectionDef[] = [
+  {
+    id: "ai-trading",
+    label: "AI 自动交易",
+    pattern:
+      "\\b(trad(e|ing|er)|stock|stocks|portfolio|alpaca|crypto|bitcoin|polymarket|options|hedge fund|backtest|investing|quant|ticker)\\b|股票|交易|投资组合|量化|期权",
+    description: "股票、ETF、期权、预测市场等自动交易决策",
+  },
+  {
+    id: "browser-auto",
+    label: "浏览器自动化",
+    pattern:
+      "\\b(browser|chrome|playwright|puppeteer|fill out|scrape|scraping|headless|browser-use)\\b|浏览器|自动填表|网页抓取|无头浏览器",
+    description: "Chrome / Playwright 模拟操作、自动填表与抓取",
+  },
+  {
+    id: "self-hosted",
+    label: "7×24 定时后台",
+    pattern:
+      "\\b(24/7|24-hour|cron|nightly|every morning|every day|every two hours|self-hosted|vps|daemon|heartbeat)\\b|每天早上|每晚|定时|每两小时|24小时|自托管",
+    description: "无人值守定时任务、每日巡检与常驻后台代理",
+  },
+  {
+    id: "voice-call",
+    label: "AI 打电话语音",
+    pattern:
+      "\\b(phone call|cold call|call (the|a|an|my)|vapi|twilio|voice agent|voicemail)\\b|打电话|电话语音|语音代理|致电",
+    description: "语音代理自动致电预约、客服通话与砍价协商",
+  },
+  {
+    id: "multi-agent",
+    label: "多智能体协同",
+    pattern:
+      "\\b(multi-agent|swarm|team of|orchestrat|subagent|11-agent|parallel agents|agent team|crew)\\b|多智能体|多代理|并行代理|代理团队",
+    description: "Agent Swarm 与多角色分工协作流水线",
+  },
+  {
+    id: "earn-money",
+    label: "AI 自动赚钱",
+    pattern:
+      "\\b(earn money|freelance|upwork|fiverr|side hustle|revenue|monetize|sell services|make money|bounty)\\b|赚钱|接单|自由职业|副业|变现",
+    description: "自由职业接单、自动交付服务与副业变现",
+  },
+];
+
+// Emerging cross-category candidate patterns evaluated during scheduled syncs
+const CANDIDATE_RADAR: CollectionDef[] = [
+  {
+    id: "mcp-tools",
+    label: "MCP 工具链",
+    pattern: "\\b(mcp|model context protocol)\\b|MCP",
+    description: "基于 Model Context Protocol 连接外部工具与本地数据",
+  },
+  {
+    id: "local-llm",
+    label: "本地开源模型",
+    pattern: "\\b(ollama|local llm|qwen|llama|deepseek|vllm|lm studio)\\b|本地模型|开源模型",
+    description: "使用 Ollama、Qwen、DeepSeek 等本地推理驱动 Agent",
+  },
+  {
+    id: "notion-obsidian",
+    label: "双链笔记整理",
+    pattern: "\\b(obsidian|notion|second brain|knowledge graph)\\b|双链|知识库",
+    description: "自动同步整理 Notion 与 Obsidian 个人知识库",
+  },
+  {
+    id: "iot-hardware",
+    label: "硬件与物联网",
+    pattern: "\\b(raspberry pi|arduino|esp32|smart home|home assistant|3d print|cad|iot)\\b|树莓派|智能家居|硬件|物联网",
+    description: "智能家居控制、嵌入式硬件与 3D/CAD 驱动",
+  },
+];
+
+function matchCol(item: { title?: string; summary?: string }, col: CollectionDef): boolean {
+  try {
+    return new RegExp(col.pattern, "i").test(`${item.title || ""} ${item.summary || ""}`);
+  } catch {
+    return false;
+  }
+}
+
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -172,11 +260,40 @@ async function syncUpstream(env: Env, maxTranslate = 60) {
     await env.CACHE.put("translations", JSON.stringify(translationsMap));
   }
 
-  const catalogZh = catalog.map((item) => ({
-    ...item,
-    title: translationsMap[item.title?.trim()] || item.title,
-    summary: translationsMap[item.summary?.trim()] || item.summary,
-  }));
+  const activeCollections =
+    ((await env.CACHE.get("collections_config", "json")) as CollectionDef[] | null) ||
+    DEFAULT_COLLECTIONS;
+  const rejectedIds =
+    ((await env.CACHE.get("collections_rejected", "json")) as string[] | null) || [];
+
+  const catalogZh = catalog.map((item) => {
+    const zhItem = {
+      ...item,
+      title: translationsMap[item.title?.trim()] || item.title,
+      summary: translationsMap[item.summary?.trim()] || item.summary,
+    };
+    const matchedCols = activeCollections
+      .filter((col) => matchCol(zhItem, col))
+      .map((col) => col.id);
+    return { ...zhItem, collections: matchedCols };
+  });
+
+  // Discover candidate collections from emerging cross-category topics
+  const activeIds = new Set(activeCollections.map((c) => c.id));
+  const rejectedSet = new Set(rejectedIds);
+  const candidates = CANDIDATE_RADAR.filter(
+    (c) => !activeIds.has(c.id) && !rejectedSet.has(c.id)
+  )
+    .map((c) => {
+      const matched = catalogZh.filter((it) => matchCol(it, c));
+      return {
+        ...c,
+        count: matched.length,
+        samples: matched.slice(0, 3).map((m) => String(m.title || "")),
+        discoveredAt: new Date().toISOString(),
+      };
+    })
+    .filter((c) => c.count >= 10);
 
   const trendingZh = {
     items: (trending.items || []).map((t) => ({
@@ -206,6 +323,8 @@ async function syncUpstream(env: Env, maxTranslate = 60) {
     env.CACHE.put("trending_zh", JSON.stringify(trendingZh)),
     env.CACHE.put("votes", JSON.stringify(votes)),
     env.CACHE.put("sync_status", JSON.stringify(status)),
+    env.CACHE.put("collections_config", JSON.stringify(activeCollections)),
+    env.CACHE.put("collections_candidates", JSON.stringify(candidates)),
   ]);
 
   return status;
@@ -343,6 +462,79 @@ export default {
       if (pathname === "/api/sync-now" && request.method === "POST") {
         const status = await syncUpstream(env, 60);
         return jsonResponse(status);
+      }
+
+      if (pathname === "/api/collections" && request.method === "GET") {
+        const [active, pending, catalogStr] = await Promise.all([
+          env.CACHE.get("collections_config", "json") as Promise<CollectionDef[] | null>,
+          env.CACHE.get("collections_candidates", "json") as Promise<unknown[] | null>,
+          env.CACHE.get("catalog_zh", "text"),
+        ]);
+        const activeList = active || DEFAULT_COLLECTIONS;
+        let pendingList = pending;
+        if (!pendingList && catalogStr) {
+          const catalogZh = JSON.parse(catalogStr) as Array<{ title?: string; summary?: string }>;
+          const rejectedIds =
+            ((await env.CACHE.get("collections_rejected", "json")) as string[] | null) || [];
+          const activeIds = new Set(activeList.map((c) => c.id));
+          const rejectedSet = new Set(rejectedIds);
+          pendingList = CANDIDATE_RADAR.filter(
+            (c) => !activeIds.has(c.id) && !rejectedSet.has(c.id)
+          )
+            .map((c) => {
+              const matched = catalogZh.filter((it) => matchCol(it, c));
+              return {
+                ...c,
+                count: matched.length,
+                samples: matched.slice(0, 3).map((m) => String(m.title || "")),
+                discoveredAt: new Date().toISOString(),
+              };
+            })
+            .filter((c) => c.count >= 10);
+        }
+        return jsonResponse({ active: activeList, pending: pendingList || [] }, 200, 60);
+      }
+
+      if (pathname === "/api/collections/review" && request.method === "POST") {
+        const body = (await request.json().catch(() => ({}))) as {
+          id?: string;
+          action?: "approve" | "reject";
+          label?: string;
+        };
+        if (!body.id || (body.action !== "approve" && body.action !== "reject")) {
+          return jsonResponse({ error: "Invalid review payload" }, 400);
+        }
+        const active =
+          ((await env.CACHE.get("collections_config", "json")) as CollectionDef[] | null) ||
+          [...DEFAULT_COLLECTIONS];
+        const rejected =
+          ((await env.CACHE.get("collections_rejected", "json")) as string[] | null) || [];
+        const pending =
+          ((await env.CACHE.get("collections_candidates", "json")) as CollectionDef[] | null) || [];
+
+        if (body.action === "approve") {
+          const candidate =
+            pending.find((c) => c.id === body.id) ||
+            CANDIDATE_RADAR.find((c) => c.id === body.id);
+          if (candidate && !active.some((c) => c.id === candidate.id)) {
+            active.push({
+              id: candidate.id,
+              label: (body.label || candidate.label).trim().slice(0, 10),
+              pattern: candidate.pattern,
+              description: candidate.description,
+            });
+          }
+        } else {
+          if (!rejected.includes(body.id)) rejected.push(body.id);
+        }
+
+        const nextPending = pending.filter((c) => c.id !== body.id);
+        await Promise.all([
+          env.CACHE.put("collections_config", JSON.stringify(active)),
+          env.CACHE.put("collections_rejected", JSON.stringify(rejected)),
+          env.CACHE.put("collections_candidates", JSON.stringify(nextPending)),
+        ]);
+        return jsonResponse({ ok: true, active, pending: nextPending });
       }
 
       return jsonResponse({ error: "Not found" }, 404);

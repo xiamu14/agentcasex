@@ -10,6 +10,7 @@ const CF_PROXY_PREFIXES = [
   "/api/detail/",
   "/api/sync-status",
   "/api/sync-now",
+  "/api/collections",
 ];
 
 export default async function handler(req, res) {

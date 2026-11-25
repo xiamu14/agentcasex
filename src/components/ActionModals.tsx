@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { CATEGORIES, AGENT_PALETTE } from "../constants";
-import type { UseCase } from "../types";
+import type { CandidateCollection, UseCase } from "../types";
 
 interface SubscribeModalProps {
   open: boolean;
@@ -404,6 +404,132 @@ export function AboutModal({ open, totalCount, onClose }: AboutModalProps) {
             知道了
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface CollectionReviewModalProps {
+  open: boolean;
+  candidates: CandidateCollection[];
+  onClose: () => void;
+  onReviewed: (id: string, action: "approve" | "reject", label?: string) => Promise<void>;
+}
+
+export function CollectionReviewModal({
+  open,
+  candidates,
+  onClose,
+  onReviewed,
+}: CollectionReviewModalProps) {
+  const [labels, setLabels] = useState<Record<string, string>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  if (!open) return null;
+
+  async function handleAction(id: string, action: "approve" | "reject", defaultLabel: string) {
+    setBusyId(id);
+    try {
+      const label = (labels[id] ?? defaultLabel).trim().slice(0, 10);
+      await onReviewed(id, action, label);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-[3px]"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-bg p-6 shadow-2xl"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="关闭"
+          className="absolute top-4 right-4 inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-wash hover:text-text"
+        >
+          <X className="size-4" />
+        </button>
+
+        <p className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase">
+          专题发现与审核 · COLLECTIONS REVIEW
+        </p>
+        <h3 className="mt-1.5 font-display text-xl font-bold text-text">
+          候选专题审核
+        </h3>
+        <p className="mt-1 text-sm text-muted">
+          系统每 30 分钟自动扫描跨分类高频主题，审核通过后将立即上线至侧边栏。
+        </p>
+
+        {candidates.length === 0 ? (
+          <div className="my-8 rounded-xl border border-dashed border-line bg-panel p-6 text-center text-sm text-muted">
+            暂无待审核的新候选专题
+          </div>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {candidates.map((c) => {
+              const currentLabel = labels[c.id] ?? c.label;
+              const isBusy = busyId === c.id;
+              return (
+                <li
+                  key={c.id}
+                  className="rounded-xl border border-line bg-panel/60 p-4"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <input
+                      type="text"
+                      maxLength={10}
+                      value={currentLabel}
+                      onChange={(e) =>
+                        setLabels((prev) => ({ ...prev, [c.id]: e.target.value }))
+                      }
+                      className="w-44 rounded-md border border-line bg-bg px-2.5 py-1 text-sm font-semibold text-text focus:border-text focus:outline-none"
+                    />
+                    <span className="font-mono text-xs text-signal">
+                      匹配 {c.count} 条
+                    </span>
+                  </div>
+                  {c.description && (
+                    <p className="mt-1.5 text-xs text-muted">{c.description}</p>
+                  )}
+                  {c.samples?.length > 0 && (
+                    <ul className="mt-2 space-y-1 border-t border-dashed border-line pt-2 text-xs text-faint">
+                      {c.samples.map((s, idx) => (
+                        <li key={idx} className="truncate">
+                          · {s}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => handleAction(c.id, "reject", c.label)}
+                      className="rounded-md border border-line bg-bg px-3 py-1.5 text-xs text-muted hover:text-text disabled:opacity-50"
+                    >
+                      忽略
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => handleAction(c.id, "approve", c.label)}
+                      className="rounded-md bg-text px-3 py-1.5 text-xs font-medium text-bg hover:opacity-90 disabled:opacity-50"
+                    >
+                      {isBusy ? "处理中..." : "审核上线"}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

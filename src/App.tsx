@@ -3,12 +3,15 @@ import { Loader2, Search, X } from "lucide-react";
 import {
   CATEGORIES,
   CATEGORY_MAP,
+  DEFAULT_COLLECTIONS,
   MERGED_CLAUDE_AGENT,
-  isAiTradingCase,
   isWithinDays,
+  matchesCollection,
   normalizeAgentName,
 } from "./constants";
 import type {
+  CandidateCollection,
+  CollectionDef,
   SortMode,
   SpecialView,
   SyncStatus,
@@ -23,6 +26,7 @@ import { UseCaseRow } from "./components/UseCaseRow";
 import { DetailModal } from "./components/DetailModal";
 import {
   AboutModal,
+  CollectionReviewModal,
   SubmitModal,
   SubscribeModal,
 } from "./components/ActionModals";
@@ -94,6 +98,12 @@ export default function App() {
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [collectionReviewOpen, setCollectionReviewOpen] = useState(false);
+  const [activeCollections, setActiveCollections] =
+    useState<CollectionDef[]>(DEFAULT_COLLECTIONS);
+  const [pendingCollections, setPendingCollections] = useState<
+    CandidateCollection[]
+  >([]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -138,18 +148,27 @@ export default function App() {
 
     const qs = force ? "?refresh=1" : "";
     try {
-      const [catRes, trendRes, votesRes] = await Promise.all([
+      const [catRes, trendRes, votesRes, colRes] = await Promise.all([
         fetch(`/api/catalog${qs}`),
         fetch(`/api/trending${qs}`),
         fetch(`/api/votes${qs}`),
+        fetch(`/api/collections${qs}`),
       ]);
       if (!catRes.ok) throw new Error(`目录加载失败 (${catRes.status})`);
 
-      const [catData, trendData, votesData] = await Promise.all([
+      const [catData, trendData, votesData, colData] = await Promise.all([
         catRes.json(),
         trendRes.ok ? trendRes.json() : { items: [] },
         votesRes.ok ? votesRes.json() : {},
+        colRes.ok ? colRes.json() : null,
       ]);
+
+      if (colData && Array.isArray(colData.active)) {
+        setActiveCollections(colData.active);
+        setPendingCollections(
+          Array.isArray(colData.pending) ? colData.pending : []
+        );
+      }
 
       const trendItems: TrendingItem[] = Array.isArray(trendData?.items)
         ? trendData.items
@@ -283,10 +302,20 @@ export default function App() {
     [catalog, refDate]
   );
 
-  const aiTradingCount = useMemo(
-    () => catalog.filter(isAiTradingCase).length,
-    [catalog]
+  const collectionsWithCounts = useMemo(
+    () =>
+      activeCollections.map((col) => ({
+        ...col,
+        count: catalog.filter((item) => matchesCollection(item, col)).length,
+      })),
+    [activeCollections, catalog]
   );
+
+  const activeCollectionObj = useMemo(() => {
+    if (!specialView.startsWith("collection:")) return null;
+    const id = specialView.slice("collection:".length);
+    return activeCollections.find((c) => c.id === id) || null;
+  }, [specialView, activeCollections]);
 
   // Agent counts (sorted descending, merging Claude & Claude Code, placing "Other or custom" at the end)
   const agentCounts = useMemo(() => {
@@ -332,7 +361,7 @@ export default function App() {
 
     let list = catalog.filter((item) => {
       if (specialView === "saved" && !savedIds.has(item.id)) return false;
-      if (specialView === "collection:ai-trading" && !isAiTradingCase(item)) {
+      if (activeCollectionObj && !matchesCollection(item, activeCollectionObj)) {
         return false;
       }
       if (timeFilter === "today" && item.addedAt !== latestDateStr) return false;
@@ -399,6 +428,7 @@ export default function App() {
     selectedAgent,
     selectedCategory,
     specialView,
+    activeCollectionObj,
     savedIds,
     latestDateStr,
     refDate,
@@ -574,7 +604,8 @@ export default function App() {
           syncStatus={syncStatus}
           todayCount={todayCount}
           savedCount={savedIds.size}
-          aiTradingCount={aiTradingCount}
+          collections={collectionsWithCounts}
+          pendingCollectionsCount={pendingCollections.length}
           agentCounts={agentCounts}
           categoryCounts={categoryCounts}
           selectedAgent={selectedAgent}
@@ -616,6 +647,7 @@ export default function App() {
           }}
           onOpenSubmit={() => setSubmitOpen(true)}
           onOpenAbout={() => setAboutOpen(true)}
+          onOpenCollectionReview={() => setCollectionReviewOpen(true)}
         />
 
         {/* Right Main Content */}
@@ -626,7 +658,7 @@ export default function App() {
           {/* Sticky Search & Filter Toolbar */}
           <div
             ref={toolbarRef}
-            className="sticky top-0 z-20 border-b border-dashed border-line bg-bg/95 px-4 py-4 backdrop-blur sm:px-6"
+            className="sticky top-0 z-30 border-b border-dashed border-line bg-bg/95 px-4 py-4 backdrop-blur sm:px-6"
           >
             <div className="flex items-center gap-2.5">
               {/* Search box */}
@@ -794,9 +826,9 @@ export default function App() {
                 </span>
               )}
 
-              {specialView === "collection:ai-trading" && (
+              {activeCollectionObj && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-signal-panel px-3 py-1 text-[12.5px] font-medium text-signal">
-                  <span>专题：AI 自动交易与量化</span>
+                  <span>专题：{activeCollectionObj.label}</span>
                   <button
                     type="button"
                     onClick={() => setSpecialView("none")}
@@ -971,7 +1003,7 @@ export default function App() {
               ) : (
                 /* Flat Filtered / Search / New View */
                 <div>
-                  <div className="sticky top-[var(--toolbar-h,111px)] z-10 flex items-center justify-between border-b border-dashed border-line bg-panel/95 px-4 py-3 font-mono text-[11.5px] text-faint backdrop-blur sm:px-6">
+                  <div className="sticky top-[var(--toolbar-h,111px)] z-20 flex items-center justify-between border-b border-dashed border-line bg-panel/95 px-4 py-3 font-mono text-[11.5px] text-faint backdrop-blur sm:px-6">
                     <span className="flex items-center gap-2">
                       <span>
                         {isDefaultHome ? (
@@ -1111,6 +1143,24 @@ export default function App() {
         open={aboutOpen}
         totalCount={catalog.length}
         onClose={() => setAboutOpen(false)}
+      />
+
+      <CollectionReviewModal
+        open={collectionReviewOpen}
+        candidates={pendingCollections}
+        onClose={() => setCollectionReviewOpen(false)}
+        onReviewed={async (id, action, label) => {
+          const res = await fetch("/api/collections/review", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, action, label }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.active)) setActiveCollections(data.active);
+            setPendingCollections((prev) => prev.filter((c) => c.id !== id));
+          }
+        }}
       />
     </div>
   );

@@ -47,7 +47,7 @@ export function TrendingSection({
       aria-label="今日热门"
       className="border-b border-dashed border-line"
     >
-      <div className="sticky top-[var(--toolbar-h,111px)] z-10 flex items-center justify-between border-b border-dashed border-line bg-panel/95 px-4 py-3 backdrop-blur sm:px-6">
+      <div className="sticky top-[var(--toolbar-h,111px)] z-20 flex items-center justify-between border-b border-dashed border-line bg-panel/95 px-4 py-3 backdrop-blur sm:px-6">
         <h2 className="font-mono text-[11px] font-medium tracking-[0.14em] text-faint uppercase">
           今日热门 · TRENDING TODAY
         </h2>
