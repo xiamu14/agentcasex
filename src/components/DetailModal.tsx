@@ -280,7 +280,7 @@ export function DetailModal({
                 href={originalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-text px-3.5 py-2 text-[13.5px] font-medium text-bg transition-opacity hover:opacity-90"
+                className="inline-flex h-[38px] items-center justify-center gap-1.5 rounded-lg border border-transparent bg-text px-3.5 text-[13.5px] font-medium text-bg transition-opacity hover:opacity-90"
               >
                 <span>阅读原文</span>
                 <ExternalLink className="size-3.5" />
@@ -290,19 +290,19 @@ export function DetailModal({
             <button
               type="button"
               onClick={() => onVote(item.id)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[13.5px] transition-colors ${
+              className={`inline-flex h-[38px] items-center justify-center gap-1.5 rounded-lg border px-3.5 text-[13.5px] font-medium transition-colors ${
                 voted
-                  ? "border-signal bg-signal-panel font-medium text-signal"
+                  ? "border-signal bg-signal-panel text-signal"
                   : "border-line text-muted hover:border-faint hover:text-text"
               }`}
             >
               <svg viewBox="0 0 12 12" className="size-2.5 fill-current">
                 <path d="M6 2 11 10H1L6 2Z" />
               </svg>
-              <span>我想要这个 {votes > 0 ? votes : ""}</span>
+              <span>赞一个{votes > 0 ? ` ${votes}` : ""}</span>
             </button>
 
-            <ShareMenu id={item.id} title={title} />
+            <ShareMenu id={item.id} title={title} size="md" />
           </div>
         </div>
 

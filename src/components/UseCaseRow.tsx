@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bookmark } from "lucide-react";
+import { Bookmark, ExternalLink } from "lucide-react";
 import {
   getAgentStyle,
   PLATFORM_LABELS,
@@ -153,7 +153,7 @@ export function UseCaseRow({
             </div>
 
             {/* Action pills */}
-            <div className="mt-2.5 flex items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={(e) => {
@@ -164,6 +164,18 @@ export function UseCaseRow({
               >
                 查看详情
               </button>
+              {(item.source?.url || item.link) && (
+                <a
+                  href={item.source?.url || item.link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-bg px-2.5 text-[12px] font-medium text-text transition-colors hover:border-faint"
+                >
+                  <span>阅读原文</span>
+                  <ExternalLink className="size-3" />
+                </a>
+              )}
               <ShareMenu id={item.id} title={title} />
             </div>
           </div>
@@ -174,7 +186,7 @@ export function UseCaseRow({
           <button
             type="button"
             aria-pressed={voted}
-            aria-label={`我想要这个：${title}`}
+            aria-label={`赞一个：${title}`}
             onClick={handleVoteClick}
             className={`flex size-11 flex-col items-center justify-center gap-0.5 rounded-lg transition-colors ${
               voted

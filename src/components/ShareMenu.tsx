@@ -5,9 +5,10 @@ interface ShareMenuProps {
   id: string;
   title: string;
   compact?: boolean;
+  size?: "sm" | "md";
 }
 
-export function ShareMenu({ id, title, compact = false }: ShareMenuProps) {
+export function ShareMenu({ id, title, compact = false, size = "sm" }: ShareMenuProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -55,8 +56,12 @@ export function ShareMenu({ id, title, compact = false }: ShareMenuProps) {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className={`inline-flex items-center justify-center gap-1 rounded-md border border-line bg-bg font-medium text-text transition-colors hover:border-faint ${
-          compact ? "h-8 px-2.5 text-[12px]" : "min-h-8 px-2.5 text-[12px]"
+        className={`inline-flex items-center justify-center gap-1.5 border border-line bg-bg font-medium text-text transition-colors hover:border-faint ${
+          size === "md"
+            ? "h-[38px] rounded-lg px-3.5 text-[13.5px]"
+            : compact
+            ? "h-8 rounded-md px-2.5 text-[12px]"
+            : "min-h-8 rounded-md px-2.5 text-[12px]"
         }`}
       >
         {copied ? "已复制" : "分享"}
