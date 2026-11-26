@@ -154,7 +154,7 @@ async function structureWithLLM(
   "title": "不超过36字的中文标题，直击场景与效果",
   "summary": "1-2句中文摘要，说明用了什么 Agent 做了什么事、结果如何",
   "category": "software",
-  "tools": ["Claude Code", "MCP"],
+  "tools": ["Claude Code", "MCP"], // 最多保留 5 个最核心的工具或框架标签
   "whatTheyDid": "具体实操步骤与工作流拆解（2-4句中文）",
   "howItWent": "实际运行效果、量化收益或局限（1-3句中文）",
   "worthKnowing": "避坑经验、配置要点或注意事项（1-2句中文）",
@@ -464,14 +464,17 @@ async function main() {
       const category = (VALID_CATEGORIES as readonly string[]).includes(structured.category || "")
         ? structured.category!
         : "operations";
-      const tools = Array.isArray(structured.tools) && structured.tools.length > 0 ? structured.tools : ["AI Agent"];
+      const tools =
+        Array.isArray(structured.tools) && structured.tools.length > 0
+          ? structured.tools.map((t) => String(t).trim()).filter(Boolean).slice(0, 5)
+          : ["AI Agent"];
       const id = makeStableId(channel, item.url || item.title || String(Date.now()));
       const nowIso = new Date().toISOString();
 
       const usecase = {
         id,
-        title: structured.title!.trim(),
-        summary: structured.summary!.trim(),
+        title: structured.title!.trim().slice(0, 60),
+        summary: structured.summary!.trim().slice(0, 260),
         category,
         tools,
         link: item.url || null,

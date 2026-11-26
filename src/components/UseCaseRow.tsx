@@ -66,7 +66,7 @@ export function UseCaseRow({
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="text-[15px] leading-snug font-semibold text-text">
+            <h3 className="line-clamp-2 text-[15px] leading-snug font-semibold text-text">
               <a
                 href={`/use-case/${item.id}`}
                 onClick={(e) => {
@@ -79,33 +79,40 @@ export function UseCaseRow({
               </a>
             </h3>
 
-            <p className="mt-1 text-[13.5px] leading-relaxed text-muted">
+            <p className="mt-1 line-clamp-3 text-[13.5px] leading-relaxed text-muted">
               {summary}
             </p>
 
             {/* Metadata row */}
             <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11.5px] text-faint">
               {item.agents?.known && item.agents?.labels?.length > 0 ? (
-                item.agents.labels.map((ag) => {
-                  const { color } = getAgentStyle(ag);
-                  return (
-                    <button
-                      key={ag}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectAgent(ag);
-                      }}
-                      className="inline-flex items-center gap-1.5 text-text hover:underline"
-                    >
-                      <span
-                        className="size-1.5 rounded-full"
-                        style={{ backgroundColor: color, boxShadow: "0 0 0 1px rgba(0,0,0,0.18)" }}
-                      />
-                      <span>{ag}</span>
-                    </button>
-                  );
-                })
+                <>
+                  {item.agents.labels.slice(0, 5).map((ag) => {
+                    const { color } = getAgentStyle(ag);
+                    return (
+                      <button
+                        key={ag}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectAgent(ag);
+                        }}
+                        className="inline-flex items-center gap-1.5 text-text hover:underline"
+                      >
+                        <span
+                          className="size-1.5 rounded-full"
+                          style={{ backgroundColor: color, boxShadow: "0 0 0 1px rgba(0,0,0,0.18)" }}
+                        />
+                        <span>{ag}</span>
+                      </button>
+                    );
+                  })}
+                  {item.agents.labels.length > 5 && (
+                    <span className="text-[11px] text-faint">
+                      +{item.agents.labels.length - 5}
+                    </span>
+                  )}
+                </>
               ) : (
                 <button
                   type="button"

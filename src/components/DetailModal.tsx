@@ -169,20 +169,27 @@ export function DetailModal({
           <div className="mt-4 flex flex-wrap items-center gap-2 text-[13px] text-muted">
             <span>使用工具</span>
             {item.agents?.labels?.length > 0 ? (
-              item.agents.labels.map((ag) => (
-                <button
-                  key={ag}
-                  type="button"
-                  onClick={() => {
-                    onSelectAgent(ag);
-                    onClose();
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-bg px-2 py-1 text-[12.5px] font-medium text-text transition-colors hover:border-faint"
-                >
-                  <AgentBadge name={ag} size="xs" />
-                  <span>{ag}</span>
-                </button>
-              ))
+              <>
+                {item.agents.labels.slice(0, 5).map((ag) => (
+                  <button
+                    key={ag}
+                    type="button"
+                    onClick={() => {
+                      onSelectAgent(ag);
+                      onClose();
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-line bg-bg px-2 py-1 text-[12.5px] font-medium text-text transition-colors hover:border-faint"
+                  >
+                    <AgentBadge name={ag} size="xs" />
+                    <span>{ag}</span>
+                  </button>
+                ))}
+                {item.agents.labels.length > 5 && (
+                  <span className="font-mono text-[11.5px] text-faint">
+                    +{item.agents.labels.length - 5}
+                  </span>
+                )}
+              </>
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-line px-2 py-1 text-[12.5px] text-muted">
                 自定义 Agent
