@@ -11,7 +11,8 @@ export const LLM_CONFIG = {
   model: "z-ai/glm-5.3",
   apiKeyEnv: "OPENROUTER_API_KEY",
   temperature: 0.2,
-  maxTokens: 1800,
+  maxTokens: 4500,
+  reasoningEffort: "low",
   getApiKey(): string {
     const key = process.env[this.apiKeyEnv]?.trim();
     if (!key) {
@@ -50,32 +51,52 @@ export const VALID_CATEGORIES = [
   "science",
 ] as const;
 
-export type NoLoginChannel = "github" | "v2ex" | "web" | "bilibili" | "youtube";
+export type NoLoginChannel = "web" | "v2ex" | "bilibili" | "youtube" | "github";
 
 export const CRAWL_CONFIG = {
-  phase1Channels: ["github", "v2ex", "web", "bilibili", "youtube"] as readonly NoLoginChannel[],
+  // Ordered by highest use-case yield first
+  phase1Channels: ["web", "v2ex", "bilibili", "youtube", "github"] as readonly NoLoginChannel[],
   // Respect agent-reach rule: at least 10s between searches on the same platform
   minPlatformIntervalMs: 11_000,
   commandTimeoutMs: 45_000,
-  maxItemsPerRun: 15,
+  defaultLimitPerQuery: 10,
+  maxCandidatesPerChannel: 16,
+  maxCandidatesPerRun: 45,
+  queriesPerChannelPerRun: {
+    web: 2,
+    v2ex: 5,
+    bilibili: 3,
+    youtube: 2,
+    github: 1,
+  },
   queries: {
-    github: [
-      "ai agent workflow automation",
-      "claude code mcp automation",
-      "openclaw agent use case",
-    ],
-    v2exNodes: ["python", "programmer", "create"],
     web: [
-      "real world AI agent automation workflow case study",
-      "Claude Code OpenClaw real use case prompt",
+      'site:reddit.com/r/ClaudeAI "how I use" OR "workflow" OR "automate"',
+      'site:reddit.com/r/AIAgents "use case" OR "automated" OR "built an agent"',
+      'site:dev.to "Claude Code" OR "OpenClaw" workflow automation',
+      'site:news.ycombinator.com "Show HN" AI agent automation workflow',
+      '"Claude Code" real world automation case study prompt',
+      '"OpenClaw" OR "n8n" AI agent automated my workflow',
+      '"voice agent" OR "Vapi" OR "Twilio" automated phone calls real case',
+      '"polymarket" OR "trading" AI agent multi-agent real results',
+      'site:mp.weixin.qq.com OR site:juejin.cn "Claude Code" OR "OpenClaw" 实战 案例',
+      '"browser automation" OR "Playwright" AI agent scraped booked automated',
     ],
+    v2exNodes: ["hot", "python", "programmer", "create", "share", "apple"],
     bilibili: [
-      "AI Agent 自动化 工作流 实战",
-      "Claude Code OpenClaw 案例",
+      "Claude Code 实战 案例 工作流",
+      "OpenClaw 自动化 案例 教程",
+      "n8n AI Agent 自动化工作流 实战",
+      "AI智能体 自动化 效率 实战",
     ],
     youtube: [
-      "AI agent real workflow automation case study",
-      "Claude Code real world automation",
+      "Claude Code real world workflow automation",
+      "OpenClaw AI agent automation use case",
+      "n8n AI agent real business workflow",
+    ],
+    github: [
+      '"how I use claude code" OR "my claude code workflow"',
+      '"openclaw" automated workflow case study',
     ],
   },
 } as const;
