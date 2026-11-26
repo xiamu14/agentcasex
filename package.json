@@ -12,7 +12,9 @@
     "sync": "node server/sync.mjs",
     "digest:preview": "node scripts/send-daily-digest.mjs --preview",
     "digest:send": "node scripts/send-daily-digest.mjs",
-    "digest:infisical": "infisical run --env=dev -- node scripts/send-daily-digest.mjs"
+    "digest:infisical": "infisical run --env=dev -- node scripts/send-daily-digest.mjs",
+    "crawl:dry": "infisical run --env=dev -- node scripts/crawl-agent-reach.ts --dry-run",
+    "crawl:infisical": "infisical run --env=dev -- node scripts/crawl-agent-reach.ts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

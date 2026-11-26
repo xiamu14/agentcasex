@@ -1,7 +1,10 @@
-const UPSTREAM = "https://agentusecases.ai";
+import { UPSTREAM_CONFIG } from "../../../config.ts";
+
+const UPSTREAM = UPSTREAM_CONFIG.url;
 
 interface Env {
   CACHE: KVNamespace;
+  INGEST_TOKEN?: string;
 }
 
 interface CollectionDef {
@@ -215,6 +218,79 @@ async function translateBatch(
   return updated;
 }
 
+interface CatalogItem {
+  id: string;
+  title: string;
+  summary: string;
+  category?: string;
+  tools?: string[];
+  link?: string | null;
+  source?: { platform?: string; url?: string; author?: string | null; score?: number | null; date?: string | null };
+  addedAt?: string;
+  collections?: string[];
+  crawlSource?: "agent-reach" | "upstream";
+  [k: string]: unknown;
+}
+
+function normalizeUrlForDedup(raw?: string | null): string {
+  if (!raw) return "";
+  try {
+    const u = new URL(raw.trim());
+    for (const k of [...u.searchParams.keys()]) {
+      if (k.startsWith("utm_") || k === "ref" || k === "fbclid" || k === "spm_id_from") {
+        u.searchParams.delete(k);
+      }
+    }
+    const qs = u.searchParams.toString();
+    return `${u.hostname.toLowerCase().replace(/^www\./, "")}${u.pathname.replace(/\/+$/, "")}${qs ? `?${qs}` : ""}`;
+  } catch {
+    return raw.trim().toLowerCase().replace(/\/+$/, "");
+  }
+}
+
+function normalizeTitleForDedup(title?: string | null): string {
+  if (!title) return "";
+  return title
+    .toLowerCase()
+    .replace(/[\s\p{P}\p{S}]+/gu, "")
+    .trim();
+}
+
+function mergeAndDedupeCatalog(
+  selfItems: CatalogItem[],
+  upstreamItems: CatalogItem[],
+  activeCollections: CollectionDef[]
+): CatalogItem[] {
+  const seenIds = new Set<string>();
+  const seenUrls = new Set<string>();
+  const seenTitles = new Set<string>();
+  const merged: CatalogItem[] = [];
+
+  const addIfUnique = (item: CatalogItem, crawlSource: "agent-reach" | "upstream") => {
+    const id = String(item.id || "").trim();
+    if (!id || seenIds.has(id)) return;
+    const urlKey = normalizeUrlForDedup(item.source?.url || item.link || null);
+    const titleKey = normalizeTitleForDedup(item.title);
+    if (urlKey && seenUrls.has(urlKey)) return;
+    if (titleKey && titleKey.length >= 6 && seenTitles.has(titleKey)) return;
+
+    seenIds.add(id);
+    if (urlKey) seenUrls.add(urlKey);
+    if (titleKey && titleKey.length >= 6) seenTitles.add(titleKey);
+
+    const matchedCols = activeCollections
+      .filter((col) => matchCol(item, col))
+      .map((col) => col.id);
+    merged.push({ ...item, crawlSource, collections: matchedCols });
+  };
+
+  // Self-crawled items take priority during coexistence
+  for (const item of selfItems) addIfUnique(item, "agent-reach");
+  for (const item of upstreamItems) addIfUnique(item, "upstream");
+
+  return merged;
+}
+
 async function syncUpstream(env: Env, maxTranslate = 60) {
   const [catRes, trendRes, votesRes] = await Promise.all([
     fetch(`${UPSTREAM}/api/catalog`, { headers: { Accept: "application/json" } }),
@@ -260,23 +336,22 @@ async function syncUpstream(env: Env, maxTranslate = 60) {
     await env.CACHE.put("translations", JSON.stringify(translationsMap));
   }
 
-  const activeCollections =
-    ((await env.CACHE.get("collections_config", "json")) as CollectionDef[] | null) ||
-    DEFAULT_COLLECTIONS;
-  const rejectedIds =
-    ((await env.CACHE.get("collections_rejected", "json")) as string[] | null) || [];
+  const [activeCollectionsRaw, rejectedIdsRaw, selfCrawledRaw] = await Promise.all([
+    env.CACHE.get("collections_config", "json"),
+    env.CACHE.get("collections_rejected", "json"),
+    env.CACHE.get("self_crawled_catalog", "json"),
+  ]);
+  const activeCollections = (activeCollectionsRaw as CollectionDef[] | null) || DEFAULT_COLLECTIONS;
+  const rejectedIds = (rejectedIdsRaw as string[] | null) || [];
+  const selfCrawled = (selfCrawledRaw as CatalogItem[] | null) || [];
 
-  const catalogZh = catalog.map((item) => {
-    const zhItem = {
-      ...item,
-      title: translationsMap[item.title?.trim()] || item.title,
-      summary: translationsMap[item.summary?.trim()] || item.summary,
-    };
-    const matchedCols = activeCollections
-      .filter((col) => matchCol(zhItem, col))
-      .map((col) => col.id);
-    return { ...zhItem, collections: matchedCols };
-  });
+  const upstreamZh: CatalogItem[] = catalog.map((item) => ({
+    ...item,
+    title: translationsMap[item.title?.trim()] || item.title,
+    summary: translationsMap[item.summary?.trim()] || item.summary,
+  }));
+
+  const catalogZh = mergeAndDedupeCatalog(selfCrawled, upstreamZh, activeCollections);
 
   // Discover candidate collections from emerging cross-category topics
   const activeIds = new Set(activeCollections.map((c) => c.id));
@@ -462,6 +537,107 @@ export default {
       if (pathname === "/api/sync-now" && request.method === "POST") {
         const status = await syncUpstream(env, 60);
         return jsonResponse(status);
+      }
+
+      if (pathname === "/api/ingest" && request.method === "POST") {
+        if (env.INGEST_TOKEN) {
+          const auth = request.headers.get("Authorization") || "";
+          if (auth !== `Bearer ${env.INGEST_TOKEN}`) {
+            return jsonResponse({ error: "Unauthorized" }, 401);
+          }
+        }
+        const body = (await request.json().catch(() => ({}))) as {
+          items?: Array<{
+            usecase: CatalogItem;
+            detail?: {
+              id?: string;
+              whatTheyDid?: string;
+              howItWent?: string;
+              worthKnowing?: string;
+              prompt?: string;
+              originalUrl?: string | null;
+            };
+          }>;
+        };
+        const incoming = Array.isArray(body.items) ? body.items : [];
+        if (incoming.length === 0) {
+          return jsonResponse({ ok: true, added: 0, skipped: 0 });
+        }
+
+        const [selfRaw, catalogRaw, activeRaw] = await Promise.all([
+          env.CACHE.get("self_crawled_catalog", "json"),
+          env.CACHE.get("catalog_zh", "json"),
+          env.CACHE.get("collections_config", "json"),
+        ]);
+        const selfCatalog = (selfRaw as CatalogItem[] | null) || [];
+        const existingCatalog = (catalogRaw as CatalogItem[] | null) || [];
+        const activeCollections = (activeRaw as CollectionDef[] | null) || DEFAULT_COLLECTIONS;
+
+        const existingIds = new Set(existingCatalog.map((i) => String(i.id)));
+        const existingUrls = new Set(
+          existingCatalog.map((i) => normalizeUrlForDedup(i.source?.url || i.link || null)).filter(Boolean)
+        );
+        const existingTitles = new Set(
+          existingCatalog.map((i) => normalizeTitleForDedup(i.title)).filter((t) => t.length >= 6)
+        );
+
+        let added = 0;
+        let skipped = 0;
+        const detailWrites: Promise<void>[] = [];
+
+        for (const entry of incoming) {
+          const uc = entry?.usecase;
+          if (!uc?.id || !uc?.title) {
+            skipped++;
+            continue;
+          }
+          const urlKey = normalizeUrlForDedup(uc.source?.url || uc.link || null);
+          const titleKey = normalizeTitleForDedup(uc.title);
+          if (
+            existingIds.has(uc.id) ||
+            (urlKey && existingUrls.has(urlKey)) ||
+            (titleKey && titleKey.length >= 6 && existingTitles.has(titleKey))
+          ) {
+            skipped++;
+            continue;
+          }
+
+          existingIds.add(uc.id);
+          if (urlKey) existingUrls.add(urlKey);
+          if (titleKey && titleKey.length >= 6) existingTitles.add(titleKey);
+
+          const taggedItem: CatalogItem = { ...uc, crawlSource: "agent-reach" };
+          selfCatalog.unshift(taggedItem);
+          added++;
+
+          if (entry.detail) {
+            detailWrites.push(
+              env.CACHE.put(
+                `detail_zh:${uc.id}`,
+                JSON.stringify({
+                  id: uc.id,
+                  whatTheyDid: entry.detail.whatTheyDid || "",
+                  howItWent: entry.detail.howItWent || "",
+                  worthKnowing: entry.detail.worthKnowing || "",
+                  prompt: entry.detail.prompt || "",
+                  originalUrl: entry.detail.originalUrl ?? uc.source?.url ?? uc.link ?? null,
+                })
+              )
+            );
+          }
+        }
+
+        if (added > 0) {
+          const upstreamOnly = existingCatalog.filter((i) => i.crawlSource !== "agent-reach");
+          const mergedCatalog = mergeAndDedupeCatalog(selfCatalog, upstreamOnly, activeCollections);
+          await Promise.all([
+            ...detailWrites,
+            env.CACHE.put("self_crawled_catalog", JSON.stringify(selfCatalog)),
+            env.CACHE.put("catalog_zh", JSON.stringify(mergedCatalog)),
+          ]);
+        }
+
+        return jsonResponse({ ok: true, added, skipped, selfTotal: selfCatalog.length });
       }
 
       if (pathname === "/api/collections" && request.method === "GET") {
