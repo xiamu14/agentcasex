@@ -278,13 +278,14 @@ export default function App() {
   const latestDateStr = useMemo(() => {
     let maxStr = "";
     for (const c of catalog) {
-      if (c.addedAt && c.addedAt > maxStr) maxStr = c.addedAt;
+      const day = (c.addedAt || "").slice(0, 10);
+      if (day && day > maxStr) maxStr = day;
     }
     return maxStr;
   }, [catalog]);
 
   const todayCount = useMemo(
-    () => catalog.filter((c) => c.addedAt === latestDateStr).length,
+    () => catalog.filter((c) => (c.addedAt || "").slice(0, 10) === latestDateStr).length,
     [catalog, latestDateStr]
   );
 
@@ -371,7 +372,9 @@ export default function App() {
       if (activeCollectionObj && !matchesCollection(item, activeCollectionObj)) {
         return false;
       }
-      if (timeFilter === "today" && item.addedAt !== latestDateStr) return false;
+      if (timeFilter === "today" && (item.addedAt || "").slice(0, 10) !== latestDateStr) {
+        return false;
+      }
       if (timeFilter === "week" && !isWithinDays(item.addedAt, 7, refDate)) {
         return false;
       }
