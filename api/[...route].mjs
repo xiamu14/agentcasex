@@ -1,4 +1,5 @@
 import { handleApiRequest } from "../server/api-handler.mjs";
+import useCaseHandler from "./use-case.mjs";
 
 const CF_WORKER_URL =
   process.env.CF_WORKER_URL || "https://agentcasex-api.framer02.workers.dev";
@@ -16,6 +17,10 @@ const CF_PROXY_PREFIXES = [
 export default async function handler(req, res) {
   const urlObj = new URL(req.url, "http://localhost");
   const pathname = urlObj.pathname;
+
+  if (pathname === "/api/use-case") {
+    return useCaseHandler(req, res);
+  }
 
   if (CF_PROXY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p))) {
     try {
