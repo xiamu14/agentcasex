@@ -9,6 +9,10 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/use-case/:id",
+      "destination": "/api/use-case?id=:id"
+    },
+    {
       "source": "/((?!api/|llms\\.txt|robots\\.txt|sitemap\\.xml|favicon\\.svg|google[a-z0-9]+\\.html|assets/).*)",
       "destination": "/index.html"
     }
