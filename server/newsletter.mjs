@@ -1,7 +1,10 @@
 import crypto from "node:crypto";
 
-const SITE_URL = process.env.SITE_URL || "https://agentcases-ai.vercel.app";
-const DEFAULT_FROM = process.env.RESEND_FROM || "agentcases.ai <onboarding@resend.dev>";
+const SITE_URL = (
+  process.env.SITE_URL || "https://agentcases-ai.vercel.app"
+).replace(/\/+$/, "");
+const DEFAULT_FROM =
+  process.env.RESEND_FROM || "agentcases.ai <digest@agentcases.serenstudio.app>";
 
 function getSecret() {
   return (

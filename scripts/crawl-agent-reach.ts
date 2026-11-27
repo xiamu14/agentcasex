@@ -96,6 +96,53 @@ function normalizeTitle(title?: string | null): string {
     .trim();
 }
 
+const KNOWN_AGENTS = [
+  "Claude Code",
+  "Claude",
+  "Claude Cowork",
+  "Claude in Chrome",
+  "Claude computer use",
+  "ChatGPT",
+  "ChatGPT Agent",
+  "ChatGPT Dots",
+  "Operator",
+  "Codex",
+  "Gemini",
+  "Meta Muse",
+  "Muse",
+  "Grok Bot",
+  "Perplexity Comet",
+  "Manus",
+  "OpenClaw",
+  "Alexa+",
+  "Dots",
+  "Hermes Agent",
+  "Hermes",
+  "Microsoft Scout",
+  "Devin",
+  "Replit Agent",
+  "Cursor",
+  "GitHub Copilot",
+  "n8n",
+  "Zapier Agents",
+  "Make",
+  "Lindy",
+];
+
+const KNOWN_AGENT_MAP = new Map(KNOWN_AGENTS.map((a) => [a.toLowerCase(), a]));
+
+function extractAgentFilters(tools: string[]): { filter: string[]; known: boolean } {
+  const matched = new Set<string>();
+  for (const t of tools) {
+    const canonical = KNOWN_AGENT_MAP.get(t.trim().toLowerCase());
+    if (canonical) matched.add(canonical);
+  }
+  if (matched.size > 0) {
+    return { filter: Array.from(matched), known: true };
+  }
+  return { filter: ["Other or custom"], known: false };
+}
+
 function makeStableId(platform: string, url: string): string {
   const hash = crypto.createHash("sha1").update(normalizeUrl(url) || url).digest("hex").slice(0, 12);
   return `ar-${platform}-${hash}`;
@@ -486,9 +533,8 @@ async function main() {
         },
         addedAt: nowIso,
         agents: {
-          filter: tools,
+          ...extractAgentFilters(tools),
           labels: tools,
-          known: true,
         },
         accounts: 1,
         described: true,

@@ -7,7 +7,11 @@ export default defineConfig({
     name: "agentcasex-api",
     compatibilityDate: "2026-11-01",
     entrypoint,
-    triggers: [triggers.scheduled({ schedule: "*/30 * * * *" })],
+    triggers: [
+      triggers.scheduled({ schedule: "*/30 * * * *" }),
+      // 02:00 UTC = 10:00 Asia/Shanghai: daily collection reorganization & tag cleanup
+      triggers.scheduled({ schedule: "0 2 * * *" }),
+    ],
     env: {
       CACHE: bindings.kv({ id: "8badd0e7a93547b5976f7bdbb7a168b2" }),
     },

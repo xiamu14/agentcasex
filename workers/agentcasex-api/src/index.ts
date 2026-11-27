@@ -227,9 +227,81 @@ interface CatalogItem {
   link?: string | null;
   source?: { platform?: string; url?: string; author?: string | null; score?: number | null; date?: string | null };
   addedAt?: string;
+  agents?: { filter?: string[]; labels?: string[]; known?: boolean };
   collections?: string[];
   crawlSource?: "agent-reach" | "upstream";
   [k: string]: unknown;
+}
+
+const KNOWN_AGENTS = [
+  "Claude Code",
+  "Claude",
+  "Claude Cowork",
+  "Claude in Chrome",
+  "Claude computer use",
+  "ChatGPT",
+  "ChatGPT Agent",
+  "ChatGPT Dots",
+  "Operator",
+  "Codex",
+  "Gemini",
+  "Meta Muse",
+  "Muse",
+  "Grok Bot",
+  "Perplexity Comet",
+  "Manus",
+  "OpenClaw",
+  "Alexa+",
+  "Dots",
+  "Hermes Agent",
+  "Hermes",
+  "Microsoft Scout",
+  "Devin",
+  "Replit Agent",
+  "Cursor",
+  "GitHub Copilot",
+  "n8n",
+  "Zapier Agents",
+  "Make",
+  "Lindy",
+];
+
+const KNOWN_AGENT_MAP = new Map(KNOWN_AGENTS.map((a) => [a.toLowerCase(), a]));
+
+function extractAgentFilters(rawTools: string[]): { filter: string[]; known: boolean } {
+  const matched = new Set<string>();
+  for (const t of rawTools) {
+    const canonical = KNOWN_AGENT_MAP.get(String(t || "").trim().toLowerCase());
+    if (canonical) matched.add(canonical);
+  }
+  if (matched.size > 0) {
+    return { filter: Array.from(matched), known: true };
+  }
+  return { filter: ["Other or custom"], known: false };
+}
+
+function normalizeSelfCrawledItem(item: CatalogItem): CatalogItem {
+  const rawTools = Array.isArray(item.tools)
+    ? item.tools.map((t) => String(t).trim()).filter(Boolean).slice(0, 5)
+    : [];
+  const rawLabels = Array.isArray(item.agents?.labels)
+    ? item.agents!.labels!.map((t) => String(t).trim()).filter(Boolean).slice(0, 5)
+    : rawTools;
+  const rawFilterInputs = [
+    ...(Array.isArray(item.agents?.filter) ? item.agents!.filter! : []),
+    ...rawTools,
+  ];
+  const { filter, known } = extractAgentFilters(rawFilterInputs);
+  return {
+    ...item,
+    tools: rawTools,
+    crawlSource: "agent-reach",
+    agents: {
+      filter,
+      labels: rawLabels.length > 0 ? rawLabels : rawTools,
+      known,
+    },
+  };
 }
 
 function normalizeUrlForDedup(raw?: string | null): string {
@@ -285,10 +357,63 @@ function mergeAndDedupeCatalog(
   };
 
   // Self-crawled items take priority during coexistence
-  for (const item of selfItems) addIfUnique(item, "agent-reach");
+  for (const item of selfItems) addIfUnique(normalizeSelfCrawledItem(item), "agent-reach");
   for (const item of upstreamItems) addIfUnique(item, "upstream");
 
   return merged;
+}
+
+async function reorganizeCatalogAndCollections(env: Env) {
+  const [rawSelf, rawCatalog, activeCfg, rejectedIds] = await Promise.all([
+    env.CACHE.get("self_crawled_catalog", "json") as Promise<CatalogItem[] | null>,
+    env.CACHE.get("catalog_zh", "json") as Promise<CatalogItem[] | null>,
+    env.CACHE.get("collections_config", "json") as Promise<CollectionDef[] | null>,
+    env.CACHE.get("collections_rejected", "json") as Promise<string[] | null>,
+  ]);
+
+  const activeCollections = activeCfg || DEFAULT_COLLECTIONS;
+  const selfCatalog = (Array.isArray(rawSelf) ? rawSelf : []).map(normalizeSelfCrawledItem);
+  const existingCatalog = Array.isArray(rawCatalog) ? rawCatalog : [];
+  const upstreamOnly = existingCatalog.filter((i) => i.crawlSource !== "agent-reach");
+
+  const reorganizedCatalog = mergeAndDedupeCatalog(
+    selfCatalog,
+    upstreamOnly,
+    activeCollections
+  );
+
+  const activeIds = new Set(activeCollections.map((c) => c.id));
+  const rejectedSet = new Set(rejectedIds || []);
+  const pendingCandidates = CANDIDATE_RADAR.filter(
+    (c) => !activeIds.has(c.id) && !rejectedSet.has(c.id)
+  )
+    .map((c) => {
+      const matched = reorganizedCatalog.filter((it) => matchCol(it, c));
+      return {
+        ...c,
+        count: matched.length,
+        samples: matched.slice(0, 3).map((m) => String(m.title || "")),
+        discoveredAt: new Date().toISOString(),
+      };
+    })
+    .filter((c) => c.count >= 10);
+
+  const maintenanceStatus = {
+    lastOrganizedAt: new Date().toISOString(),
+    cleanedSelfCount: selfCatalog.length,
+    totalCount: reorganizedCatalog.length,
+    collectionsCount: activeCollections.length,
+    pendingCandidatesCount: pendingCandidates.length,
+  };
+
+  await Promise.all([
+    env.CACHE.put("self_crawled_catalog", JSON.stringify(selfCatalog)),
+    env.CACHE.put("catalog_zh", JSON.stringify(reorganizedCatalog)),
+    env.CACHE.put("collections_candidates", JSON.stringify(pendingCandidates)),
+    env.CACHE.put("maintenance_status", JSON.stringify(maintenanceStatus)),
+  ]);
+
+  return maintenanceStatus;
 }
 
 async function syncUpstream(env: Env, maxTranslate = 60) {
@@ -453,7 +578,11 @@ async function fetchAndTranslateDetail(id: string, env: Env) {
 }
 
 export default {
-  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    if (controller.cron === "0 2 * * *") {
+      ctx.waitUntil(reorganizeCatalogAndCollections(env));
+      return;
+    }
     ctx.waitUntil(syncUpstream(env, 80));
   },
 
@@ -606,7 +735,7 @@ export default {
           if (urlKey) existingUrls.add(urlKey);
           if (titleKey && titleKey.length >= 6) existingTitles.add(titleKey);
 
-          const taggedItem: CatalogItem = { ...uc, crawlSource: "agent-reach" };
+          const taggedItem = normalizeSelfCrawledItem(uc);
           selfCatalog.unshift(taggedItem);
           added++;
 
@@ -638,6 +767,11 @@ export default {
         }
 
         return jsonResponse({ ok: true, added, skipped, selfTotal: selfCatalog.length });
+      }
+
+      if (pathname === "/api/maintenance" && request.method === "POST") {
+        const status = await reorganizeCatalogAndCollections(env);
+        return jsonResponse({ ok: true, ...status });
       }
 
       if (pathname === "/api/collections" && request.method === "GET") {

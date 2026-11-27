@@ -146,6 +146,30 @@ export function normalizeAgentName(name: string): string {
   return name;
 }
 
+const KNOWN_AGENT_LOWER = new Map<string, string>(
+  Object.keys(AGENT_PALETTE).map((k) => [k.toLowerCase(), normalizeAgentName(k)])
+);
+
+export function isKnownAgentName(name: string): boolean {
+  return KNOWN_AGENT_LOWER.has(name.trim().toLowerCase());
+}
+
+export function getCanonicalFilterAgents(rawAgents: string[]): string[] {
+  const matched = new Set<string>();
+  for (const ag of rawAgents) {
+    const trimmed = ag.trim();
+    if (!trimmed) continue;
+    const canonical = KNOWN_AGENT_LOWER.get(trimmed.toLowerCase());
+    if (canonical) {
+      matched.add(canonical);
+    }
+  }
+  if (matched.size === 0 && rawAgents.length > 0) {
+    matched.add("Other or custom");
+  }
+  return Array.from(matched);
+}
+
 export function getAgentStyle(name: string): { mark: string; color: string } {
   const known = AGENT_PALETTE[name];
   if (known) return known;

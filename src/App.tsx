@@ -4,7 +4,8 @@ import {
   CATEGORIES,
   CATEGORY_MAP,
   DEFAULT_COLLECTIONS,
-  MERGED_CLAUDE_AGENT,
+  getCanonicalFilterAgents,
+  isKnownAgentName,
   isWithinDays,
   matchesCollection,
   normalizeAgentName,
@@ -325,14 +326,11 @@ export default function App() {
     }
   }, [activeItem, activeCollectionObj, selectedCategory, selectedAgent, tr]);
 
-  // Agent counts (sorted descending, merging Claude & Claude Code, placing "Other or custom" at the end)
+  // Agent counts (sorted descending, keeping only known AI agents, placing "Other or custom" at the end)
   const agentCounts = useMemo(() => {
     const map = new Map<string, number>();
     for (const item of catalog) {
-      const seen = new Set<string>();
-      for (const ag of item.agents?.filter || []) {
-        seen.add(normalizeAgentName(ag));
-      }
+      const seen = new Set(getCanonicalFilterAgents(item.agents?.filter || []));
       for (const ag of seen) {
         map.set(ag, (map.get(ag) || 0) + 1);
       }
@@ -380,14 +378,18 @@ export default function App() {
       }
       if (selectedCategory && item.category !== selectedCategory) return false;
       if (selectedAgent) {
-        if (selectedAgent === "Custom agent") {
-          if (item.agents?.known) return false;
-        } else if (selectedAgent === MERGED_CLAUDE_AGENT) {
-          const allAgents = [
+        const canonicalAgents = getCanonicalFilterAgents(item.agents?.filter || []);
+        if (selectedAgent === "Custom agent" || selectedAgent === "Other or custom") {
+          if (item.agents?.known && !canonicalAgents.includes("Other or custom")) {
+            return false;
+          }
+        } else if (isKnownAgentName(selectedAgent)) {
+          const target = normalizeAgentName(selectedAgent);
+          const allCanonical = getCanonicalFilterAgents([
             ...(item.agents?.filter || []),
             ...(item.tools || []),
-          ];
-          if (!allAgents.includes("Claude") && !allAgents.includes("Claude Code")) {
+          ]);
+          if (!allCanonical.includes(target)) {
             return false;
           }
         } else if (

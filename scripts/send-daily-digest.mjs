@@ -8,7 +8,9 @@ import {
   sendDigestBatch,
 } from "../server/newsletter.mjs";
 
-const UPSTREAM = "https://agentusecases.ai";
+const SITE_URL = (
+  process.env.SITE_URL || "https://agentcases-ai.vercel.app"
+).replace(/\/+$/, "");
 const previewMode = process.argv.includes("--preview");
 
 async function translateText(text) {
@@ -32,8 +34,8 @@ async function translateText(text) {
 
 async function main() {
   const [catRes, trendRes] = await Promise.all([
-    fetch(`${UPSTREAM}/api/catalog`, { signal: AbortSignal.timeout(15000) }),
-    fetch(`${UPSTREAM}/api/trending`, { signal: AbortSignal.timeout(15000) }),
+    fetch(`${SITE_URL}/api/catalog`, { signal: AbortSignal.timeout(15000) }),
+    fetch(`${SITE_URL}/api/trending`, { signal: AbortSignal.timeout(15000) }),
   ]);
   if (!catRes.ok) throw new Error(`Catalog HTTP ${catRes.status}`);
 
